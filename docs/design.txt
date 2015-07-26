@@ -1,0 +1,218 @@
+nstd library
+
+== Goals
+
+*   Library of generic code.  Container types, meta-programming helpers, etc.
+*   Consistency in design and implementation.
+*   Minimized dependencies, in interfaces and across SW layers.
+*   Modernize to take advantage of:
+    **  C++11 features like lambdas, variadic templates, and perfect-forwarding.
+    **  Type erasure techniques.
+*   Performance.
+*   Support embedded platforms, where exceptions and RTTI are missing.
+    **  Non-exceptional versions of *interfaces*.
+*   Document new design patterns and implementation patterns.
+*   Simple, debuggable implementations wherever possible.
+*   Reasonably fast compilation: limited header deps, separate compilation, etc.
+
+
+== Summary of Features
+
+*   Generic assignment.
+    **  General support for construct-only types.
+*   Support for external type-traits via decltype(adl_function()).
+*   Type-erased allocator support.
+    **  With support for memory-pool *instances*.  As opposed to STL allocator which must be global.
+*   Smart Pointers
+    **  More policy options, so you can opt for true interface parity with pointers.
+        e.g. support for implicit cast operators
+    **  Shared pointer that doesn't pay the cost of supporting a weak pointer.
+*   Containers
+    **  Minimal core types.  (encapsulate only essentials, and keep convenience functions external)
+    **  Performant facade types.
+    **  Non-owning container types that implement a container interface over some existing storage.
+    **  Variants geared towards unspecified-type support.  "type-erasure-lite"
+    **  Iterator parity across associative and non-associative types.
+    **  Smoother interoperability between containers of the same essential type, that differ
+        only by type-traits or other template args.
+*   nstd::Func, a better version of std::function
+    **  Generic assignment support.  Solves the "non-copyable lambda" problem.
+    **  Small-buffer optimization controllable by user.
+        *** auto func = nstd::MakeFunction([=foo]() {return foo;});
+    **  As copyable and movable as the underlying bound type.
+        *** Exceptional mode: throws
+        *** Non-exceptional mode: rhs unchanged, and lhs set to "null" state.
+    **  Does *not* support pointer-to-member.  Only function-pointer & object.
+
+
+== Generic Assignment
+
+Assignment operators are incapable of assigning const members, and members of reference type,
+whereas the equivalent constructors are [of course].  This leads to awkward situations where
+copy/move-constructible types are not copy/move-assignable in a reasonable way.
+
+Common workarounds involve redefining members as assignable entities -- removing const, or changing
+references to pointers -- effectively sacrifices type-safety for assignability.  It's a trade-off
+we shouldn't have to make.
+
+The straightforward solution is to define a generic_assign<T, U>(lhs, rhs) function that is
+overloaded to either call the assignment operator if it exists, or else fall back to
+destructing then re-constructing the lhs.  All assignments needing this behavior
+(invocations of operator=) would then be replaced by calls to generic_assign.
+
+Note that this is not advocating implementing a type's operator= in terms of
+destruct(this)-then-construct(this).  That clearly doesn't work with inheritance.
+
+Performing a generic_assign() is legitimate in every case where value assignment would be.
+
+
+=== Language Change?
+
+Ideally, the language would be amended so that an '=' would perform the equivalent of
+generic_assign.  But, this would break tons of code out there, that implements the
+copy-ctor with a call to this->operator=.  The next best thing might be a new operator,
+like a fat arrow '<=='.
+
+
+
+== Smart Pointers
+
+*   Freedom to choose certain policies.
+    **  Types with interface parity with raw-pointers.
+    **  Raw-pointer wrapper that has interface parity with std::unique_ptr.
+*   Graceful methods for static and dynamic casts.
+*   Variant of shared-pointer that does not support weak-pointer.
+    This can be built on top of intrusive_ptr.
+*   Threadsafe and non-threadsafe versions of refcounting.
+
+
+=== STL Analysis
+
+STL (and boost) smart pointers are perverse: they don't have the same interface as pointers!
+This makes converting between raw-pointers and smart-pointers in existing code very expensive.
+
+.shared_ptr:
+
+*   It's a code-virus.  Cannot convert from raw -> shared ... unless you inherit from some
+    specific base-class to make it an intrusive refcount -- which makes it a poorly designed
+    subset of intrusive_ptr.
+*   Support for weak_ptr necessarily reduces performance; rather than a simple atomic refcount,
+    the implementation must take some kind of lock on the "control-structure".
+*   std::make_shared doesn't take an allocator policy.
+*   std::make_shared may allocate the object and control-structure in one uber-allocation.
+    This effectively makes all weak-pointers into strong-pointers w.r.t. allocation lifetime.
+
+
+
+
+== Container Types
+
+*   Vector variants
+    **  all supporting generic_assign
+    **  all supporting functor-based Append
+    **  optional support for type-erased allocator
+    **  specified and unspecified variants
+*   IntrusiveSet variants
+    **  variant that supports unspecified type (unlike boost where type must be visible
+        for declaration, when using a member-hook)
+    **  Provide a non-templated version of red-black-tree, avl-tree, etc. that the templated
+        versions can call -- to avoid re-instancing the same code repeatedly.
+        A form of type erasure.
+*   Set types with greater flexibility than "tranditional" map types.
+    **  Discourage the std::map interface.
+*   VanEmdeBoas Tree
+    **  cache-oblivious layout per subtree
+    **  at some point, need to sub-allocate
+*   Binary Tree Vector
+    **  all operations are O(log N)
+    **  provides random-access iterators
+*   Finger Trees
+*   Immutable data structures
+
+
+=== Type-Erased Allocators for Containers
+
+*   Members:
+    **  char* Alloc(size_t);
+    **  void Free(char*);
+*   Allocator objects should be passed-by-reference and held-by-pointer in containers.
+
+
+== Container Facades
+
+Here we define facades as types that inherit from an exist type, so that a client may
+simply cast an original object to the facade type and use it with no space or indirection
+penalty.
+
+Facade types have the following benefits:
+
+*   Adapt an object with one interface as another.  (e.g. make a nstd::Vector look like a std::vector)
+*   Provide a delivery mechanism for convenience-functions, callable with member-syntax, without
+    polluting the core type.
+    **  Free functions callable via ADL are also a good option.  But member-syntax works
+        better with auto-completion.  Why not both.
+*   Provides a pattern for user-extensibility.
+
+Guidelines:
+
+*   Facades should inherit from the core type (or another facade), as a matter of convention.
+    **  This avoids introducing a layer of pointer-indirection (which would wreck perf).
+    **  This is compatible with the strict-aliasing rule, since derived types are related.
+*   Facades should not contain additional state, to be compatible with the inheritance
+    and cast strategy.  (they shouldn't need extra state either)
+
+
+
+== Non-Owning Views
+
+These are a type of adapter, that "attach" to existing storage, and present a container view
+of it.  Prime examples:
+
+*   vector over static buffer, or stack buffer
+*   string over char[]
+
+Const views are especially valuable over pre-baked data (.rodata) which must be POD.
+e.g.
+    auto str = nstd::MakeStringView("stuff");
+    str.length();
+
+
+
+
+
+== Iterators
+
+=== Iterator Parity
+
+In the STL and the boost, vector and set iterators behave differently from map iterators.
+
+*   For vector and set, dereference operator returns element&.
+*   For maps, operator returns a std::pair<Key,Value>.
+
+To correct this, we can split map iterators into 3 categories:
+
+*   A "key iterator", where dereferencing returns a Key&.
+*   A "value iterator", where dereferencing returns a Value&.
+*   An "element iterator", where dereferencing returns a pair<Key,Value>&.
+
+We can make all these types inter-convertible, and we can add a key() and value()
+method to all iterators.  Since we want consistency, vector and set iterators should also
+implement these, but return the same element& for both.
+
+
+=== Binary-Tree Iterators
+
+aka Binary-Traversal Iterators
+
+*   Have methods left(), right(), parent()
+*   Supportable on sorted arrays naturally:
+    **  Root is the center, left() and right() are half the distance to each node's range.
+    **  Iterator must keep a triple of {lo, mid, hi}.
+
+
+=== N-Ary Tree Iterators
+
+
+
+
+
