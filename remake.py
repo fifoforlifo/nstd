@@ -112,8 +112,6 @@ def generate_ninja_build(projectMan):
                 for arch in ['aarch32']:
                     deploy_variants.append(repo.DeployVariant("%s-%s-%s" % (toolchain_name, arch, config)))
 
-    currentScriptPath = os.path.join(pynja.rootDir, os.path.basename(__file__))
-    
     projectMan.emit_rules()
     projectMan.ninjaFile.write("\n");
     projectMan.ninjaFile.write("#############################################\n");
@@ -134,5 +132,10 @@ def generate_ninja_build(projectMan):
 
 print("generating with rootDir=%s" % pynja.rootDir)
 repo.init()
-pynja.import_file('tests/tests.py')
+currentScriptPath = os.path.join(pynja.rootDir, os.path.basename(__file__))
+pynja.root_paths._scriptPathsAbs['__main__'] = currentScriptPath
+pynja.root_paths._scriptPathsRel['__main__'] = '.'
+pynja.root_paths._scriptRelToAbs['.'] = currentScriptPath
+pynja.import_subdir('nstd')
+pynja.import_subdir('tests')
 pynja.regenerate_build(generate_ninja_build, pynja.rootPaths.built, pynja.rootPaths.codeBrowsing)

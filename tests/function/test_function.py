@@ -5,6 +5,7 @@ import repo
 @pynja.project
 class test_function(repo.CppProject):
     def emit(self):
+        libnstd = self.add_cpplib_dependency('nstd', 'sta')
         sources = [
             "test_function.cpp",
         ]
