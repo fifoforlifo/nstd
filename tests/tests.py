@@ -24,7 +24,6 @@ class tests(repo.DeployProject):
         ]
         for test_name in test_names:
             self.add_runtime_dependency_project(self.get_project(test_name, primaryVariant))
-            print(test_name + '-' + primaryVariantStr)
 
         self.deploy(productDir)
 

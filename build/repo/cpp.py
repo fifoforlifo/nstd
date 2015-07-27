@@ -76,8 +76,11 @@ class CppProject(pynja.CppProject):
                 task.dynamicCRT = (self.variant.crt == 'dcrt')
 
         self.set_gcc_machine_arch(task)
+        task.std = 'gnu++11'
 
-        task.debugLevel = 2;
+        task.debugLevel = 2
+        if isinstance(self.toolchain, pynja.ClangMsvcToolChain):
+            task.debugLevel = 0
         if self.variant.config == "dbg":
             task.optLevel = 0
         elif self.variant.config == "rel":
