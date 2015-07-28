@@ -133,9 +133,15 @@ def generate_ninja_build(projectMan):
 print("generating with rootDir=%s" % pynja.rootDir)
 repo.init()
 currentScriptPath = os.path.join(pynja.rootDir, os.path.basename(__file__))
+# TODO: fix core pynja and remove these __main__ hacks
 pynja.root_paths._scriptPathsAbs['__main__'] = currentScriptPath
 pynja.root_paths._scriptPathsRel['__main__'] = '.'
 pynja.root_paths._scriptRelToAbs['.'] = currentScriptPath
+
+# Import subdirectories, to define all projects.
+pynja.import_subdir('imports')
 pynja.import_subdir('nstd')
 pynja.import_subdir('tests')
+
+# Generate the build.
 pynja.regenerate_build(generate_ninja_build, pynja.rootPaths.built, pynja.rootPaths.codeBrowsing)

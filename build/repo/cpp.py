@@ -71,9 +71,6 @@ class CppProject(pynja.CppProject):
         super().set_cpp_compile_options(task)
         task.extraDeps.extend(self._forcedDeps)
         task.phonyTarget = os.path.basename(task.sourcePath)
-        if self.variant.os == "windows":
-            if "msvc" in self.variant.toolchain:
-                task.dynamicCRT = (self.variant.crt == 'dcrt')
 
         self.set_gcc_machine_arch(task)
         task.std = 'gnu++11'
@@ -88,8 +85,18 @@ class CppProject(pynja.CppProject):
             if not task.createPCH:
                 task.lto = self.toolchain.ltoSupport
 
+        task.warningsAsErrors = True
+
+        if "msvc" in self.variant.toolchain:
+            task.dynamicCRT = (self.variant.crt == 'dcrt')
+            task.extraOptions.append('/wd4996')
         if isinstance(self.toolchain, pynja.ClangToolChain):
             task.extraOptions.append("-fcolor-diagnostics")
+        if isinstance(self.toolchain, pynja.GccToolChain) or isinstance(self.toolchain, pynja.ClangMsvcToolChain):
+            task.extraOptions.append("-Wno-deprecated")
+            
+        task.defines.append('_CRT_SECURE_NO_WARNINGS')
+        task.defines.append('_CRT_SECURE_NO_DEPRECATE')
 
 
     # library creation

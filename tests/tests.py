@@ -1,6 +1,4 @@
-import os
-import pynja
-import repo
+import os, pynja, repo
 
 pynja.import_subdir_file('function/test_function.py')
 
