@@ -1396,6 +1396,7 @@ class Mutex : public MutexBase {
   Mutex() {
     GTEST_CHECK_POSIX_SUCCESS_(pthread_mutex_init(&mutex_, NULL));
     has_owner_ = false;
+    owner_ = pthread_t();
   }
   ~Mutex() {
     GTEST_CHECK_POSIX_SUCCESS_(pthread_mutex_destroy(&mutex_));
