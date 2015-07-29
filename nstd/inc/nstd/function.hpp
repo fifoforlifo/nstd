@@ -25,18 +25,27 @@ namespace nstd {
         func_base(const This& rhs)
             : m_fn(rhs.m_fn), m_obj(rhs.m_obj)
         {}
+        func_base(This&& rhs)
+            : m_fn(rhs.m_fn), m_obj(rhs.m_obj)
+        {}
         func_base(fn_raw fn)
             : m_fn(), m_obj()
         {
             *this = fn;
         }
-        template <class FuncObj, typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, fn_raw>::value>::type* = 0>
+        template <class FuncObj, class U = typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value, FuncObj>::type>
         func_base(FuncObj&& fnobj)
         {
             *this = std::forward<FuncObj&&>(fnobj);
         }
 
         This& operator=(const This& rhs)
+        {
+            m_fn = rhs.m_fn;
+            m_obj = rhs.m_obj;
+            return *this;
+        }
+        This& operator=(This&& rhs)
         {
             m_fn = rhs.m_fn;
             m_obj = rhs.m_obj;
@@ -56,14 +65,14 @@ namespace nstd {
             m_obj = (char*)fn;
             return *this;
         }
-        template <class FuncObj, typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, fn_raw>::value>::type* = 0>
+        template <class FuncObj, class U = typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value, FuncObj>::type>
         This& operator=(FuncObj&& fnobj)
         {
             struct Adapter
             {
                 static TRet invoke(char* obj, TArgs... args)
                 {
-                    FuncObj&& fnobj = (FuncObj&&)*obj;
+                    FuncObj& fnobj = (FuncObj&)*obj;
                     return fnobj(std::forward<TArgs>(args)...);
                 }
             };
@@ -99,10 +108,13 @@ namespace nstd {
         func_ref(const This& rhs)
             : Base(rhs)
         {}
+        func_ref(This&& rhs)
+            : Base(std::forward<This&&>(rhs))
+        {}
         func_ref(typename This::fn_raw fn)
             : Base(fn)
         {}
-        template <class FuncObj, typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value>::type* = 0>
+        template <class FuncObj, class U = typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value, FuncObj>::type>
         func_ref(FuncObj&& fnobj)
             : Base(std::forward<FuncObj&&>(fnobj))
         {}
@@ -112,12 +124,17 @@ namespace nstd {
             Base::operator=(rhs);
             return *this;
         }
+        This& operator=(This&& rhs)
+        {
+            Base::operator=(std::forward<This&&>(rhs));
+            return *this;
+        }
         This& operator=(typename This::fn_raw fn)
         {
             Base::operator=(fn);
             return *this;
         }
-        template <class FuncObj, typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value>::type* = 0>
+        template <class FuncObj, class U = typename std::enable_if<!std::is_same<typename std::decay<FuncObj>::type, This>::value && !std::is_same<typename std::decay<FuncObj>::type, typename This::fn_raw>::value, FuncObj>::type>
         This& operator=(FuncObj&& fnobj)
         {
             Base::operator=(std::forward<FuncObj&&>(fnobj));

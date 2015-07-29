@@ -12,5 +12,9 @@ class test_function(repo.CppProject):
         sources = [
             "src/test_function.cpp",
         ]
-        self.cpp_compile(sources)
+
+        pchTask = self.make_pch("src/test_function_pch.h")
+        with self.cpp_compile_ex(sources) as tasks:
+            tasks.usePCH = pchTask.outputPath
+
         self.make_executable("test_function")

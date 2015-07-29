@@ -13,6 +13,7 @@ if os.name == "nt":
             super().__init__(name, msvcInstallDir, arch, msvcVer)
             self._cxx_script  = os.path.join(self._scriptDir, "clang_msvc-cxx-invoke.py")
             self._cxx_script_extra_args = '"%s"' % llvmDir
+            self.supportsPCH = False
 
         def translate_warn_level(self, options, task):
             if not (0 <= task.warnLevel <= 4):
