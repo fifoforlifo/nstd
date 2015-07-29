@@ -23,3 +23,7 @@ if os.name == "nt":
             options.append("/W" + str(task.warnLevel))
             if task.warningsAsErrors:
                 options.append("/WX")
+
+        def translate_debug_level(self, options, task):
+            if task.debugLevel > 0:
+                options.append("/Z7")
