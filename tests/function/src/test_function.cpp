@@ -43,6 +43,20 @@ TEST(Function, func_base_ctor)
         double sin1 = dd(1.0 * M_PI / 2);
         EXPECT_EQ(sin1, 1.0);
     }
+    {
+        double y = 0.0;
+        auto dsin = [&y](double x) { return sin(x + y); };
+        nstd::func_base<double, double> dd = dsin;
+        EXPECT_TRUE(!!dd);
+        double sin1 = dd(1.0 * M_PI / 2);
+        EXPECT_EQ(sin1, 1.0);
+    }
+    {
+        nstd::func_base<double, double> dd = [](double x) { return sin(x); };
+        EXPECT_TRUE(!!dd);
+        double sin1 = dd(1.0 * M_PI / 2);
+        EXPECT_EQ(sin1, 1.0);
+    }
 }
 
 TEST(Function, func_base_assign)
@@ -64,6 +78,11 @@ TEST(Function, func_ref_ctor)
     }
     {
         nstd::func_ref<double(double)> dd = &sin;
+        EXPECT_TRUE(!!dd);
+        EXPECT_EQ(dd(0.0), 0.0);
+    }
+    {
+        nstd::func_ref<double(double)> dd = [](double x) { return sin(x); };
         EXPECT_TRUE(!!dd);
         EXPECT_EQ(dd(0.0), 0.0);
     }
