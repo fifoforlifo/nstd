@@ -2,7 +2,7 @@
 #include <math.h>
 #include "gtest/gtest.h"
 #include <functional>
-#include <nstd/function.hpp>
+#include <nstd/func_ref.hpp>
 
 TEST(Function, aaa)
 {
