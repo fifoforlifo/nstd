@@ -1,7 +1,7 @@
 #pragma once
 
-#include <functional>
-#include <type_traits>
+#include <cstddef>
+#include <utility>
 
 #if _MSC_VER
 #pragma warning(push)
@@ -28,6 +28,9 @@ namespace nstd {
         func_base()
             : m_fn(), m_obj()
         {}
+        func_base(std::nullptr_t)
+            : m_fn(), m_obj()
+        {}
         func_base(const This& rhs)
             : m_fn(rhs.m_fn), m_obj(rhs.m_obj)
         {}
@@ -51,6 +54,12 @@ namespace nstd {
             *this = std::forward<FuncObj&&>(fnobj);
         }
 
+        This& operator=(std::nullptr_t)
+        {
+            m_fn = nullptr;
+            m_obj = nullptr;
+            return *this;
+        }
         This& operator=(const This& rhs)
         {
             m_fn = rhs.m_fn;
@@ -129,6 +138,9 @@ namespace nstd {
         func_ref()
             : Base()
         {}
+        func_ref(std::nullptr_t)
+            : Base()
+        {}
         func_ref(const This& rhs)
             : Base(rhs)
         {}
@@ -149,6 +161,11 @@ namespace nstd {
             : Base(std::forward<FuncObj&&>(fnobj))
         {}
 
+        This& operator=(std::nullptr_t)
+        {
+            Base::operator=(nullptr);
+            return *this;
+        }
         This& operator=(const This& rhs)
         {
             Base::operator=(rhs);

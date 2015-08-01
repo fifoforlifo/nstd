@@ -1,0 +1,20 @@
+        nstd::func_base<double, double> dd = &sin;
+...
+        double sin1 = dd(1.0 * M_PI / 2);
+000381F5  movsd       xmm0,mmword ptr ds:[83A80h]
+000381FD  sub         esp,8
+00038200  movsd       mmword ptr [esp],xmm0
+00038205  push        76824h
+0003820A  call        `nstd::func_base<double,double>::operator='::`2'::Adapter::invoke (03B330h)
+
+--- d:\work\code\048_nstd\nstd\inc\nstd\function.hpp ---------------------------
+                    fn_raw fn = (fn_raw)obj;
+                    return fn(std::forward<TArgs>(args)...);
+0003B330  movsd       xmm0,mmword ptr [<args_0>]
+0003B336  sub         esp,8
+0003B339  movsd       mmword ptr [esp],xmm0
+0003B33E  call        dword ptr [esp+0Ch]
+0003B342  add         esp,8
+                }
+0003B345  ret
+

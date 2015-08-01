@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "gtest/gtest.h"
+#include <functional>
 #include <nstd/function.hpp>
 
 TEST(Function, aaa)
@@ -8,18 +9,33 @@ TEST(Function, aaa)
     {
         std::function<double(double)> dd = (double(*)(double))&fabs;
         dd = std::function<double(double)>([](double) {return 1.0;});
-        dd(1.0);
+        dd(1.0 * M_PI / 2);
     }
+#if !(__clang_major__ && _WIN32)
     {
-        //std::function<double(double)> dd = [](double x) { return sin(x); };
+        std::function<double(double)> dd = (double(*)(double))&sin;
+        dd(1.0 * M_PI / 2);
+        dd = [](double x) { return sin(x); };
+        double y = M_PI * 2;
+        dd = [&y](double x) { return sin(x + y); };
+        dd(1.0 * M_PI / 2);
     }
+#endif
 }
 
 TEST(Function, func_base_ctor)
 {
     {
         nstd::func_base<double, double> dd;
-        EXPECT_FALSE(!!dd);
+        EXPECT_TRUE(!dd);
+    }
+    {
+        nstd::func_base<double, double> dd = nullptr;
+        EXPECT_TRUE(!dd);
+        dd = &sin;
+        EXPECT_TRUE((bool)dd);
+        dd = nullptr;
+        EXPECT_TRUE(!dd);
     }
     {
         nstd::func_base<double, double> dd = &sin;
@@ -44,10 +60,10 @@ TEST(Function, func_base_ctor)
         EXPECT_EQ(sin1, 1.0);
     }
     {
-        double y = 0.0;
+        double y = M_PI * 2;
         auto dsin = [&y](double x) { return sin(x + y); };
         nstd::func_base<double, double> dd = dsin;
-        EXPECT_TRUE(!!dd);
+        EXPECT_TRUE((bool)dd);
         double sin1 = dd(1.0 * M_PI / 2);
         EXPECT_EQ(sin1, 1.0);
     }
@@ -61,13 +77,20 @@ TEST(Function, func_base_ctor)
 
 TEST(Function, func_base_assign)
 {
-    nstd::func_base<double, double> d2d = &sin;
-    d2d = &cos;
-    d2d = nstd::func_base<double, double>();
-    d2d = nstd::func_base<double, double>(&fabs);
-    d2d = nstd::func_base<double, double>([](double) {return 1.0;});
-    d2d(1.0);
-    d2d = &fabs;
+    nstd::func_base<double, double> dd = &sin;
+    EXPECT_EQ(dd(1.0 * M_PI / 2), 1.0);
+    dd = &cos;
+    EXPECT_EQ(dd(0.0), 1.0);
+    dd = nstd::func_base<double, double>();
+    EXPECT_TRUE(!dd);
+    dd = nstd::func_base<double, double>(&fabs);
+    EXPECT_TRUE((bool)dd);
+    EXPECT_EQ(dd(-1.0), 1.0);
+    dd = nstd::func_base<double, double>([](double) {return 1.0;});
+    EXPECT_EQ(dd(0.0), 1.0);
+    dd = &fabs;
+    EXPECT_TRUE((bool)dd);
+    EXPECT_EQ(dd(-1.0), 1.0);
 }
 
 TEST(Function, func_ref_ctor)

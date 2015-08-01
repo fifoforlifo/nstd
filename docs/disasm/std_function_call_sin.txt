@@ -1,0 +1,31 @@
+        std::function<double(double)> dd = (double(*)(double))&sin;
+...
+        dd(1.0 * M_PI / 2);
+00037FCD  movsd       xmm0,mmword ptr ds:[83A80h]
+00037FD5  mov         dword ptr [ebp-4],2
+00037FDC  movsd       mmword ptr [ebp-68h],xmm0
+00037FE1  test        ecx,ecx
+00037FE3  jne         Function_aaa_Test::TestBody+12Bh (037FEBh)
+00037FE5  call        dword ptr ds:[93100h]
+$LN666:
+00037FEB  mov         eax,dword ptr [ecx]
+00037FED  lea         edx,[ebp-68h]
+00037FF0  push        edx
+00037FF1  mov         eax,dword ptr [eax+8]
+00037FF4  call        eax
+
+std::_Func_impl<double (__cdecl*)(double),std::allocator<int>,double,double>::_Do_call:
+00033017  jmp         std::_Func_impl<double (__cdecl*)(double),std::allocator<int>,double,double>::_Do_call (03A420h)
+
+--- c:\program files (x86)\microsoft visual studio 14.0\vc\include\functional --
+		return (_Invoke_ret(_Forced<_Rx>(), _Callee(),
+0003A420  mov         eax,dword ptr [<_Args_0>]
+0003A424  sub         esp,8
+0003A427  movsd       xmm0,mmword ptr [eax]
+0003A42B  mov         eax,dword ptr [ecx+4]
+0003A42E  movsd       mmword ptr [esp],xmm0
+0003A433  call        eax
+0003A435  add         esp,8
+			_STD forward<_Types>(_Args)...));
+		}
+0003A438  ret         4
