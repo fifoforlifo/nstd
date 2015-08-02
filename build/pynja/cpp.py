@@ -317,8 +317,6 @@ class CppProject(build.Project):
 
         task = self.make_executable_abs_ex(outputPath)
         task.phonyTarget = name
-        if self.variant.config == 'rel':
-            task.lto = self.toolchain.ltoSupport
         return task
 
     def make_executable(self, name):

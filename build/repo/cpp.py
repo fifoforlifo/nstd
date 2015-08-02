@@ -119,6 +119,8 @@ class CppProject(pynja.CppProject):
         super().set_executable_options(task)
         self.set_gcc_machine_arch(task)
         task.keepDebugInfo = True
+        if self.variant.config == 'rel':
+            task.lto = self.toolchain.ltoSupport
 
 
     # Convenience functions that assumes that the current project
