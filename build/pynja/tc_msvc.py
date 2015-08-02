@@ -86,7 +86,9 @@ if os.name == "nt":
             elif 1 <= task.optLevel <= 2:
                 options.append("/O" + str(task.optLevel))
             elif task.optLevel == 3:
-                options.append("/Ox")
+                options.append("/O2") # recommended over /Ox
+                if self._cxx_script_extra_args == "":
+                    options.append("/GL")
             else:
                 raise Exception("invalid optimization level: " + str(task.optLevel))
 

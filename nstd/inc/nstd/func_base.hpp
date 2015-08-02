@@ -121,7 +121,7 @@ namespace nstd {
 
         TRet operator()(TArgs... args) const
         {
-            return m_fn(m_obj, args...);
+            return m_fn(m_obj, std::forward<TArgs>(args)...);
         }
     };
 

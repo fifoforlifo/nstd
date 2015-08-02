@@ -4,6 +4,34 @@
 #include <functional>
 #include <nstd/func_ref.hpp>
 
+class NonCopyable
+{
+    NonCopyable(const NonCopyable& rhs);
+    NonCopyable(NonCopyable&& rhs);
+    NonCopyable& operator=(const NonCopyable& rhs);
+    NonCopyable& operator=(NonCopyable&& rhs);
+public:
+    int x;
+    NonCopyable() : x(10) {}
+};
+
+void ProcessNonCopyable(NonCopyable& nc)
+{
+    char s[10];
+    sprintf(s, "%d", nc.x);
+}
+
+void CallPNC(nstd::func_ref<void(NonCopyable&)> fref)
+{
+    NonCopyable nc;
+    fref(nc);
+}
+
+double add10(double x)
+{
+    return x + 10;
+}
+
 TEST(Function, aaa)
 {
     {
@@ -108,6 +136,14 @@ TEST(Function, func_ref_ctor)
         nstd::func_ref<double(double)> dd = [](double x) { return sin(x); };
         EXPECT_TRUE(!!dd);
         EXPECT_EQ(dd(0.0), 0.0);
+    }
+    {
+        nstd::func_ref<double(double)> dd = &add10;
+        double thirteen = dd(3.0);
+        EXPECT_EQ(thirteen, 13.0);
+    }
+    {
+        CallPNC(&ProcessNonCopyable);
     }
 }
 
