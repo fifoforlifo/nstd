@@ -4,29 +4,6 @@
 #include <functional>
 #include <nstd/func_ref.hpp>
 
-class NonCopyable
-{
-    NonCopyable(const NonCopyable& rhs);
-    NonCopyable(NonCopyable&& rhs);
-    NonCopyable& operator=(const NonCopyable& rhs);
-    NonCopyable& operator=(NonCopyable&& rhs);
-public:
-    int x;
-    NonCopyable() : x(10) {}
-};
-
-void ProcessNonCopyable(NonCopyable& nc)
-{
-    char s[10];
-    sprintf(s, "%d", nc.x);
-}
-
-void CallPNC(nstd::func_ref<void(NonCopyable&)> fref)
-{
-    NonCopyable nc;
-    fref(nc);
-}
-
 double add10(double x)
 {
     return x + 10;
@@ -121,6 +98,30 @@ TEST(Function, func_base_assign)
     EXPECT_EQ(dd(-1.0), 1.0);
 }
 
+
+class NonCopyable
+{
+    NonCopyable(const NonCopyable& rhs);
+    NonCopyable(NonCopyable&& rhs);
+    NonCopyable& operator=(const NonCopyable& rhs);
+    NonCopyable& operator=(NonCopyable&& rhs);
+public:
+    int x;
+    NonCopyable() : x(10) {}
+};
+
+void ProcessNonCopyable(NonCopyable& nc)
+{
+    char s[10];
+    sprintf(s, "%d", nc.x);
+}
+
+void CallPNC(nstd::func_ref<void(NonCopyable&)> fref)
+{
+    NonCopyable nc;
+    fref(nc);
+}
+
 TEST(Function, func_ref_ctor)
 {
     {
@@ -145,10 +146,4 @@ TEST(Function, func_ref_ctor)
     {
         CallPNC(&ProcessNonCopyable);
     }
-}
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -11,6 +11,7 @@ class test_function(repo.CppProject):
 
         sources = [
             "src/test_function.cpp",
+            "src/test_function_main.cpp",
         ]
 
         pchTask = self.make_pch("src/test_function_pch.h")
