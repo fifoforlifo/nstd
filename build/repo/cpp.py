@@ -82,6 +82,8 @@ class CppProject(pynja.CppProject):
             task.optLevel = 3
             if not task.createPCH:
                 task.lto = self.toolchain.ltoSupport
+            if isinstance(self.toolchain, pynja.MsvcToolChain):
+                task.extraOptions.append("/Oy")
 
         task.warningsAsErrors = True
 
@@ -92,7 +94,7 @@ class CppProject(pynja.CppProject):
             task.extraOptions.append("-fcolor-diagnostics")
         if isinstance(self.toolchain, pynja.GccToolChain) or isinstance(self.toolchain, pynja.ClangMsvcToolChain):
             task.extraOptions.append("-Wno-deprecated")
-            
+
         task.defines.append('_CRT_SECURE_NO_WARNINGS')
         task.defines.append('_CRT_SECURE_NO_DEPRECATE')
 
