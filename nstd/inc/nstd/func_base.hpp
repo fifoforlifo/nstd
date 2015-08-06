@@ -20,7 +20,7 @@ namespace nstd {
         typedef func_base<TRet, TArgs...> This;
 
     private:
-        typedef TRet(*fn_type)(char* obj, TArgs... args);
+        typedef TRet(*fn_type)(TArgs... args, char* obj);
         fn_type m_fn;
         char* m_obj;
 
@@ -99,7 +99,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet invoke(char* obj, TArgs... args)
+                static TRet invoke(TArgs... args, char* obj)
                 {
                     fn_raw fn = (fn_raw)obj;
                     return fn(std::forward<TArgs>(args)...);
@@ -114,7 +114,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet invoke(char* obj, TArgs... args)
+                static TRet invoke(TArgs... args, char* obj)
                 {
                     FuncObj& fnobj = (FuncObj&)*obj;
                     return fnobj(std::forward<TArgs>(args)...);
@@ -132,7 +132,7 @@ namespace nstd {
 
         TRet operator()(TArgs... args) const
         {
-            return m_fn(m_obj, std::forward<TArgs>(args)...);
+            return m_fn(std::forward<TArgs>(args)..., m_obj);
         }
     };
 
