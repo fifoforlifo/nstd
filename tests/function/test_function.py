@@ -1,4 +1,4 @@
-import os, pynja, repo
+﻿import os, pynja, repo
 
 @pynja.project
 class test_function(repo.CppProject):
@@ -10,6 +10,7 @@ class test_function(repo.CppProject):
         self.includePaths.append(os.path.join(libnstd.projectDir, "inc"))
 
         sources = [
+            "src/test_func_ref.cpp",
             "src/test_function.cpp",
             "src/test_function_main.cpp",
         ]

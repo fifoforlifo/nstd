@@ -10,9 +10,6 @@
 
 namespace nstd {
 
-    template <class TRet, class... TArgs>
-    func_base<TRet, TArgs...> select_func_base(TRet(*)(TArgs...));
-
     template <class TSig>
     class func_ref : public decltype(select_func_base((TSig*)nullptr))
     {
@@ -20,6 +17,7 @@ namespace nstd {
         typedef decltype(select_func_base((TSig*)nullptr)) Base;
         typedef func_ref<TSig> This;
 
+    public:
         func_ref()
             : Base()
         {}
@@ -83,8 +81,6 @@ namespace nstd {
             return *this;
         }
     };
-
-
 
 } // namespace nstd
 
