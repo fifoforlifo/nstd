@@ -148,7 +148,7 @@ namespace nstd {
                 Base::operator=(nullptr);
                 return false;
             }
-            adapter_t* p_adapter = new (p_buf) adapter_t(std::forward<FuncObj&&>(fnobj));
+            adapter_t* p_adapter = new (p_buf) adapter_t(static_cast<FuncObj&&>(fnobj));
             if (!p_adapter)
             {
                 m_p_byte_pool->release(p_buf);
@@ -201,7 +201,7 @@ namespace nstd {
         function(This&& rhs)
             : Base(noinit_t())
         {
-            move_init(std::forward<This&&>(rhs));
+            move_init(static_cast<This&&>(rhs));
         }
         function(typename Base::fn_raw fn)
             : Base(fn), m_p_fnobj()
@@ -213,7 +213,7 @@ namespace nstd {
             : Base(noinit_t()), m_p_fnobj()
         {
             m_p_byte_pool = &get_default_byte_pool();
-            assign_fnobj(std::forward<FuncObj&&>(fnobj));
+            assign_fnobj(static_cast<FuncObj&&>(fnobj));
         }
 
         This& operator=(std::nullptr_t)
@@ -256,7 +256,7 @@ namespace nstd {
         This& operator=(FuncObj&& fnobj)
         {
             release();
-            assign_fnobj(std::forward<FuncObj&&>(fnobj));
+            assign_fnobj(static_cast<FuncObj&&>(fnobj));
             return *this;
         }
     };

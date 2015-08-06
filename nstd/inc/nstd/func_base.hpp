@@ -62,7 +62,7 @@ namespace nstd {
         template <class FuncObj>
         func_base(FuncObj&& fnobj)
         {
-            *this = std::forward<FuncObj&&>(fnobj);
+            *this = static_cast<FuncObj&&>(fnobj);
         }
 
         This& operator=(std::nullptr_t)
@@ -102,7 +102,7 @@ namespace nstd {
                 static TRet invoke(TArgs... args, char* obj)
                 {
                     fn_raw fn = (fn_raw)obj;
-                    return fn(std::forward<TArgs>(args)...);
+                    return fn(static_cast<TArgs&&>(args)...);
                 }
             };
             m_fn = &Adapter::invoke;
@@ -117,7 +117,7 @@ namespace nstd {
                 static TRet invoke(TArgs... args, char* obj)
                 {
                     FuncObj& fnobj = (FuncObj&)*obj;
-                    return fnobj(std::forward<TArgs>(args)...);
+                    return fnobj(static_cast<TArgs&&>(args)...);
                 }
             };
             m_fn = &Adapter::invoke;
@@ -132,7 +132,7 @@ namespace nstd {
 
         TRet operator()(TArgs... args) const
         {
-            return m_fn(std::forward<TArgs>(args)..., m_obj);
+            return m_fn(static_cast<TArgs&&>(args)..., m_obj);
         }
     };
 
