@@ -9,25 +9,6 @@ double add10(double x)
     return x + 10;
 }
 
-TEST(Function, aaa)
-{
-    {
-        std::function<double(double)> dd = (double(*)(double))&fabs;
-        dd = std::function<double(double)>([](double) {return 1.0;});
-        dd(1.0 * M_PI / 2);
-    }
-#if !(__clang_major__ && _WIN32)
-    {
-        std::function<double(double)> dd = (double(*)(double))&sin;
-        dd(1.0 * M_PI / 2);
-        dd = [](double x) { return sin(x); };
-        double y = M_PI * 2;
-        dd = [&y](double x) { return sin(x + y); };
-        dd(1.0 * M_PI / 2);
-    }
-#endif
-}
-
 TEST(Function, func_base_ctor)
 {
     {
