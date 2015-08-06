@@ -27,6 +27,10 @@ TEST(Function, std_function)
             {
                 return x + y + z;
             };
+        if (!add2)
+        {
+            add2 = [](double x, double y) { return x + y; };
+        }
         double seven = add2(3, 4);
         EXPECT_EQ(17.0, seven);
     }
@@ -51,6 +55,10 @@ TEST(Function, nstd_function)
             {
                 return x + y + z;
             };
+        if (!add2)
+        {
+            add2 = [](double x, double y) { return x + y; };
+        }
         double seven = add2(3, 4);
         EXPECT_EQ(17.0, seven);
     }
