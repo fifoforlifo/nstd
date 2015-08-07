@@ -1,6 +1,7 @@
 import os, pynja, repo
 
 pynja.import_subdir_file('function/test_function.py')
+pynja.import_subdir('bench_func')
 
 @pynja.project
 class tests(repo.DeployProject):
@@ -19,6 +20,7 @@ class tests(repo.DeployProject):
 
         test_names = [
             'test_function',
+            'bench_func',
         ]
         for test_name in test_names:
             self.add_runtime_dependency_project(self.get_project(test_name, primaryVariant))
