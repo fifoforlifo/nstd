@@ -63,6 +63,10 @@ TEST(Function, std_function)
             {
                 return heavy.method(x, y, z, w);
             };
+        if (!inner_prod)
+        {
+            inner_prod = [](double x, double y, double z, double w) { return x+y+z+w; };
+        }
         double ip_value = inner_prod(1, 0, 0, 0);
         EXPECT_EQ(30.0, ip_value);
     }
@@ -103,6 +107,10 @@ TEST(Function, nstd_function)
             {
                 return heavy.method(x, y, z, w);
             };
+        if (!inner_prod)
+        {
+            inner_prod = [](double x, double y, double z, double w) { return x + y + z + w; };
+        }
         double ip_value = inner_prod(1, 0, 0, 0);
         EXPECT_EQ(30.0, ip_value);
     }

@@ -1,38 +1,97 @@
-    99:         double ip_value = inner_prod(1);
-00007FF73D2F7006 48 8B D3             mov         rdx,rbx  
-00007FF73D2F7009 F2 0F 10 05 D7 F1 03 00 movsd       xmm0,mmword ptr [__real@3ff0000000000000 (07FF73D3361E8h)]  
-00007FF73D2F7011 FF D6                call        rsi  
-00007FF73D2F7013 F2 0F 11 45 BF       movsd       mmword ptr [rbp-41h],xmm0  
+   114:         double ip_value = inner_prod(1, 0, 0, 0);
+00007FF79D6372C5 F2 0F 11 54 24 20    movsd       mmword ptr [rsp+20h],xmm2  
+00007FF79D6372CB 0F 28 DA             movaps      xmm3,xmm2  
+00007FF79D6372CE F2 0F 10 0D A2 FF 03 00 movsd       xmm1,mmword ptr [00007FF79D677278h]  
+00007FF79D6372D6 48 8B CF             mov         rcx,rdi  
+00007FF79D6372D9 FF D2                call        rdx  
+00007FF79D6372DB F2 0F 11 44 24 38    movsd       mmword ptr [rsp+38h],xmm0  
+--- d:\work\code\048_nstd\nstd\inc\nstd\func_base.hpp --------------------------
    119:                     FuncObj& fnobj = (FuncObj&)*obj;
    120:                     return fnobj(static_cast<TArgs&&>(args)...);
-00007FF73D2F9530 48 8B 42 08          mov         rax,qword ptr [rdx+8]  
-   115:             struct Adapter
-   116:             {
-   117:                 static TRet invoke(TArgs... args, char* obj)
-   118:                 {
-00007FF73D2F9534 0F 28 D0             movaps      xmm2,xmm0  
-   119:                     FuncObj& fnobj = (FuncObj&)*obj;
-   120:                     return fnobj(static_cast<TArgs&&>(args)...);
-00007FF73D2F9537 48 8B 0A             mov         rcx,qword ptr [rdx]  
-00007FF73D2F953A 4C 8B C0             mov         r8,rax  
-00007FF73D2F953D 4C 2B C1             sub         r8,rcx  
-00007FF73D2F9540 33 D2                xor         edx,edx  
-00007FF73D2F9542 49 83 C0 07          add         r8,7  
-00007FF73D2F9546 0F 57 C0             xorps       xmm0,xmm0  
-00007FF73D2F9549 49 C1 E8 03          shr         r8,3  
-00007FF73D2F954D 48 3B C8             cmp         rcx,rax  
-00007FF73D2F9550 4C 0F 47 C2          cmova       r8,rdx  
-00007FF73D2F9554 4D 85 C0             test        r8,r8  
-00007FF73D2F9557 74 1E                je          `nstd::func_base<double,double>::operator=<<lambda_cdef95ac06d2123eb9bbe31d256349be> & __ptr64>'::`2'::Adapter::invoke+47h (07FF73D2F9577h)  
-00007FF73D2F9559 0F 1F 80 00 00 00 00 nop         dword ptr [rax]  
-00007FF73D2F9560 0F 28 CA             movaps      xmm1,xmm2  
-00007FF73D2F9563 48 FF C2             inc         rdx  
-00007FF73D2F9566 F2 0F 59 09          mulsd       xmm1,mmword ptr [rcx]  
-00007FF73D2F956A 48 83 C1 08          add         rcx,8  
-00007FF73D2F956E F2 0F 58 C1          addsd       xmm0,xmm1  
-00007FF73D2F9572 49 3B D0             cmp         rdx,r8  
-   119:                     FuncObj& fnobj = (FuncObj&)*obj;
-   120:                     return fnobj(static_cast<TArgs&&>(args)...);
-00007FF73D2F9575 75 E9                jne         `nstd::func_base<double,double>::operator=<<lambda_cdef95ac06d2123eb9bbe31d256349be> & __ptr64>'::`2'::Adapter::invoke+30h (07FF73D2F9560h)  
-   121:                 }
-00007FF73D2F9577 C3                   ret  
+00007FF79D639F80 E9 5B BF FF FF       jmp         00007FF79D635EE0  
+--- d:\work\code\048_nstd\tests\function\src\test_function.cpp -----------------
+    14:         double acc = 0;
+    15:         for (auto value : values)
+00007FF79D635EE0 48 8B 11             mov         rdx,qword ptr [rcx]  
+00007FF79D635EE3 45 33 C0             xor         r8d,r8d  
+00007FF79D635EE6 4C 8B 51 08          mov         r10,qword ptr [rcx+8]  
+     1: #define _USE_MATH_DEFINES
+     2: #include <math.h>
+     3: #include "gtest/gtest.h"
+     4: #include <functional>
+     5: #include <nstd/function.hpp>
+     6: 
+     7: struct Heavy
+     8: {
+     9:     std::vector<double> values;
+    10:     std::vector<double> values2;
+    11: 
+    12:     double method(double x, double y, double z, double w)
+    13:     {
+00007FF79D635EEA 0F 28 E9             movaps      xmm5,xmm1  
+00007FF79D635EED 4C 2B D2             sub         r10,rdx  
+00007FF79D635EF0 4C 8B D9             mov         r11,rcx  
+00007FF79D635EF3 49 83 C2 07          add         r10,7  
+00007FF79D635EF7 0F 57 E4             xorps       xmm4,xmm4  
+00007FF79D635EFA 49 C1 EA 03          shr         r10,3  
+00007FF79D635EFE 45 8B C8             mov         r9d,r8d  
+00007FF79D635F01 48 3B 51 08          cmp         rdx,qword ptr [rcx+8]  
+00007FF79D635F05 4D 0F 47 D0          cmova       r10,r8  
+    14:         double acc = 0;
+    15:         for (auto value : values)
+00007FF79D635F09 4D 85 D2             test        r10,r10  
+00007FF79D635F0C 74 29                je          00007FF79D635F37  
+00007FF79D635F0E F2 0F 58 CA          addsd       xmm1,xmm2  
+00007FF79D635F12 F2 0F 58 CB          addsd       xmm1,xmm3  
+00007FF79D635F16 F2 0F 58 4C 24 28    addsd       xmm1,mmword ptr [rsp+28h]  
+00007FF79D635F1C 0F 1F 40 00          nop         dword ptr [rax]  
+    16:         {
+    17:             acc += value * (x + y + z + w);
+00007FF79D635F20 0F 28 C1             movaps      xmm0,xmm1  
+    14:         double acc = 0;
+    15:         for (auto value : values)
+00007FF79D635F23 49 FF C1             inc         r9  
+    16:         {
+    17:             acc += value * (x + y + z + w);
+00007FF79D635F26 F2 0F 59 02          mulsd       xmm0,mmword ptr [rdx]  
+    16:         {
+    17:             acc += value * (x + y + z + w);
+00007FF79D635F2A 48 83 C2 08          add         rdx,8  
+00007FF79D635F2E F2 0F 58 E0          addsd       xmm4,xmm0  
+00007FF79D635F32 4D 3B CA             cmp         r9,r10  
+00007FF79D635F35 75 E9                jne         00007FF79D635F20  
+    18:         }
+    19:         for (auto value : values2)
+00007FF79D635F37 48 8B 49 18          mov         rcx,qword ptr [rcx+18h]  
+00007FF79D635F3B 49 8B 53 20          mov         rdx,qword ptr [r11+20h]  
+00007FF79D635F3F 48 2B D1             sub         rdx,rcx  
+00007FF79D635F42 48 83 C2 07          add         rdx,7  
+00007FF79D635F46 48 C1 EA 03          shr         rdx,3  
+00007FF79D635F4A 49 3B 4B 20          cmp         rcx,qword ptr [r11+20h]  
+00007FF79D635F4E 49 0F 47 D0          cmova       rdx,r8  
+00007FF79D635F52 48 85 D2             test        rdx,rdx  
+00007FF79D635F55 74 30                je          00007FF79D635F87  
+00007FF79D635F57 F2 0F 58 EA          addsd       xmm5,xmm2  
+00007FF79D635F5B F2 0F 58 EB          addsd       xmm5,xmm3  
+00007FF79D635F5F F2 0F 58 6C 24 28    addsd       xmm5,mmword ptr [rsp+28h]  
+00007FF79D635F65 66 66 66 0F 1F 84 00 00 00 00 00 nop         word ptr [rax+rax+0000000000000000h]  
+    20:         {
+    21:             acc += value * (x + y + z + w);
+00007FF79D635F70 0F 28 CD             movaps      xmm1,xmm5  
+    18:         }
+    19:         for (auto value : values2)
+00007FF79D635F73 49 FF C0             inc         r8  
+    20:         {
+    21:             acc += value * (x + y + z + w);
+00007FF79D635F76 F2 0F 59 09          mulsd       xmm1,mmword ptr [rcx]  
+00007FF79D635F7A 48 83 C1 08          add         rcx,8  
+00007FF79D635F7E F2 0F 58 E1          addsd       xmm4,xmm1  
+00007FF79D635F82 4C 3B C2             cmp         r8,rdx  
+00007FF79D635F85 75 E9                jne         00007FF79D635F70  
+    22:         }
+    23:         return acc;
+00007FF79D635F87 0F 28 C4             movaps      xmm0,xmm4  
+    24:     }
+00007FF79D635F8A C3                   ret  
+--- No source file -------------------------------------------------------------
+00007FF79D635F8B CC                   int         3  
