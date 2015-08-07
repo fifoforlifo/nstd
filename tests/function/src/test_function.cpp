@@ -4,6 +4,26 @@
 #include <functional>
 #include <nstd/function.hpp>
 
+struct Heavy
+{
+    std::vector<double> values;
+    std::vector<double> values2;
+
+    double method(double x, double y, double z, double w)
+    {
+        double acc = 0;
+        for (auto value : values)
+        {
+            acc += value * (x + y + z + w);
+        }
+        for (auto value : values2)
+        {
+            acc += value * (x + y + z + w);
+        }
+        return acc;
+    }
+};
+
 TEST(Function, std_function)
 {
     {
@@ -21,11 +41,11 @@ TEST(Function, std_function)
         dd(1.0 * M_PI / 2);
     }
     {
-        double z = 10;
+        double z0 = 10, z1 = 10, z2 = 10;
         std::function<double(double, double)> add2 =
-            [z](double x, double y)
+            [z0, z1, z2](double x, double y)
             {
-                return x + y + z;
+                return x + y + z0 + z1 + z2;
             };
         if (!add2)
         {
@@ -33,6 +53,18 @@ TEST(Function, std_function)
         }
         double seven = add2(3, 4);
         EXPECT_EQ(17.0, seven);
+    }
+    {
+        Heavy heavy;
+        heavy.values = std::vector<double>{ 1, 2, 3, 4, 5 };
+        heavy.values2 = std::vector<double>{ 1, 2, 3, 4, 5 };
+        std::function<double(double, double, double, double)> inner_prod =
+            [heavy](double x, double y, double z, double w) mutable
+            {
+                return heavy.method(x, y, z, w);
+            };
+        double ip_value = inner_prod(1, 0, 0, 0);
+        EXPECT_EQ(30.0, ip_value);
     }
 #endif
 }
@@ -49,11 +81,11 @@ TEST(Function, nstd_function)
         EXPECT_EQ(7, seven);
     }
     {
-        double z = 10;
+        double z0 = 10, z1 = 10, z2 = 10;
         nstd::function<double(double, double)> add2 =
-            [z](double x, double y)
+            [z0, z1, z2](double x, double y)
             {
-                return x + y + z;
+                return x + y + z0 + z1 + z2;
             };
         if (!add2)
         {
@@ -61,5 +93,17 @@ TEST(Function, nstd_function)
         }
         double seven = add2(3, 4);
         EXPECT_EQ(17.0, seven);
+    }
+    {
+        Heavy heavy;
+        heavy.values = std::vector<double>{ 1, 2, 3, 4, 5 };
+        heavy.values2 = std::vector<double>{ 1, 2, 3, 4, 5 };
+        nstd::function<double(double, double, double, double)> inner_prod =
+            [heavy](double x, double y, double z, double w) mutable
+            {
+                return heavy.method(x, y, z, w);
+            };
+        double ip_value = inner_prod(1, 0, 0, 0);
+        EXPECT_EQ(30.0, ip_value);
     }
 }

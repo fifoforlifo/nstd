@@ -1,0 +1,38 @@
+    99:         double ip_value = inner_prod(1);
+00007FF73D2F7006 48 8B D3             mov         rdx,rbx  
+00007FF73D2F7009 F2 0F 10 05 D7 F1 03 00 movsd       xmm0,mmword ptr [__real@3ff0000000000000 (07FF73D3361E8h)]  
+00007FF73D2F7011 FF D6                call        rsi  
+00007FF73D2F7013 F2 0F 11 45 BF       movsd       mmword ptr [rbp-41h],xmm0  
+   119:                     FuncObj& fnobj = (FuncObj&)*obj;
+   120:                     return fnobj(static_cast<TArgs&&>(args)...);
+00007FF73D2F9530 48 8B 42 08          mov         rax,qword ptr [rdx+8]  
+   115:             struct Adapter
+   116:             {
+   117:                 static TRet invoke(TArgs... args, char* obj)
+   118:                 {
+00007FF73D2F9534 0F 28 D0             movaps      xmm2,xmm0  
+   119:                     FuncObj& fnobj = (FuncObj&)*obj;
+   120:                     return fnobj(static_cast<TArgs&&>(args)...);
+00007FF73D2F9537 48 8B 0A             mov         rcx,qword ptr [rdx]  
+00007FF73D2F953A 4C 8B C0             mov         r8,rax  
+00007FF73D2F953D 4C 2B C1             sub         r8,rcx  
+00007FF73D2F9540 33 D2                xor         edx,edx  
+00007FF73D2F9542 49 83 C0 07          add         r8,7  
+00007FF73D2F9546 0F 57 C0             xorps       xmm0,xmm0  
+00007FF73D2F9549 49 C1 E8 03          shr         r8,3  
+00007FF73D2F954D 48 3B C8             cmp         rcx,rax  
+00007FF73D2F9550 4C 0F 47 C2          cmova       r8,rdx  
+00007FF73D2F9554 4D 85 C0             test        r8,r8  
+00007FF73D2F9557 74 1E                je          `nstd::func_base<double,double>::operator=<<lambda_cdef95ac06d2123eb9bbe31d256349be> & __ptr64>'::`2'::Adapter::invoke+47h (07FF73D2F9577h)  
+00007FF73D2F9559 0F 1F 80 00 00 00 00 nop         dword ptr [rax]  
+00007FF73D2F9560 0F 28 CA             movaps      xmm1,xmm2  
+00007FF73D2F9563 48 FF C2             inc         rdx  
+00007FF73D2F9566 F2 0F 59 09          mulsd       xmm1,mmword ptr [rcx]  
+00007FF73D2F956A 48 83 C1 08          add         rcx,8  
+00007FF73D2F956E F2 0F 58 C1          addsd       xmm0,xmm1  
+00007FF73D2F9572 49 3B D0             cmp         rdx,r8  
+   119:                     FuncObj& fnobj = (FuncObj&)*obj;
+   120:                     return fnobj(static_cast<TArgs&&>(args)...);
+00007FF73D2F9575 75 E9                jne         `nstd::func_base<double,double>::operator=<<lambda_cdef95ac06d2123eb9bbe31d256349be> & __ptr64>'::`2'::Adapter::invoke+30h (07FF73D2F9560h)  
+   121:                 }
+00007FF73D2F9577 C3                   ret  

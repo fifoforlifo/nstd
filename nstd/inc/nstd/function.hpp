@@ -143,21 +143,22 @@ namespace nstd {
         {
             typedef fnobj_adapter<FuncObj> adapter_t;
             char* p_buf = m_p_byte_pool->acquire(sizeof(adapter_t));
-            if (!p_buf)
+            if (p_buf)
             {
-                Base::operator=(nullptr);
-                return false;
+                adapter_t* p_adapter = new (p_buf) adapter_t(static_cast<FuncObj&&>(fnobj));
+                if (p_adapter)
+                {
+                    m_p_fnobj = p_adapter;
+                    Base::operator=(p_adapter->get_obj());
+                    return true;
+                }
             }
-            adapter_t* p_adapter = new (p_buf) adapter_t(static_cast<FuncObj&&>(fnobj));
-            if (!p_adapter)
+            if (p_buf)
             {
                 m_p_byte_pool->release(p_buf);
-                Base::operator=(nullptr);
-                return false;
             }
-            m_p_fnobj = p_adapter;
-            Base::operator=(p_adapter->get_obj());
-            return true;
+            Base::operator=(nullptr);
+            return false;
         }
 
     public:

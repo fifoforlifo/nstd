@@ -1,0 +1,40 @@
+    60:         double ip_value = inner_prod(1);
+00007FF73D2F6568 F2 0F 10 05 78 FC 03 00 movsd       xmm0,mmword ptr [__real@3ff0000000000000 (07FF73D3361E8h)]  
+00007FF73D2F6570 F2 0F 11 44 24 30    movsd       mmword ptr [seven],xmm0  
+00007FF73D2F6576 48 8B 4D F8          mov         rcx,qword ptr [rbp-8]  
+00007FF73D2F657A 48 85 C9             test        rcx,rcx  
+00007FF73D2F657D 0F 94 C0             sete        al  
+00007FF73D2F6580 84 C0                test        al,al  
+00007FF73D2F6582 74 07                je          Function_std_function_Test::TestBody+50Bh (07FF73D2F658Bh)  
+00007FF73D2F6584 FF 15 36 BC 03 00    call        qword ptr [__imp_std::_Xbad_function_call (07FF73D3321C0h)]  
+00007FF73D2F658A CC                   int         3  
+00007FF73D2F658B 48 8B 01             mov         rax,qword ptr [rcx]  
+00007FF73D2F658E 48 8D 54 24 30       lea         rdx,[rsp+30h]  
+00007FF73D2F6593 FF 50 10             call        qword ptr [rax+10h]  
+00007FF73D2F6596 F2 0F 11 44 24 30    movsd       mmword ptr [rsp+30h],xmm0  
+   209: 		return (_Invoke_ret(_Forced<_Rx>(), _Callee(),
+00007FF73D2F9820 48 8B 41 10          mov         rax,qword ptr [rcx+10h]  
+00007FF73D2F9824 0F 57 C0             xorps       xmm0,xmm0  
+00007FF73D2F9827 F2 0F 10 12          movsd       xmm2,mmword ptr [rdx]  
+00007FF73D2F982B 4C 8B C0             mov         r8,rax  
+00007FF73D2F982E 48 8B 51 08          mov         rdx,qword ptr [rcx+8]  
+00007FF73D2F9832 33 C9                xor         ecx,ecx  
+00007FF73D2F9834 4C 2B C2             sub         r8,rdx  
+00007FF73D2F9837 49 83 C0 07          add         r8,7  
+00007FF73D2F983B 49 C1 E8 03          shr         r8,3  
+00007FF73D2F983F 48 3B D0             cmp         rdx,rax  
+00007FF73D2F9842 4C 0F 47 C1          cmova       r8,rcx  
+00007FF73D2F9846 4D 85 C0             test        r8,r8  
+00007FF73D2F9849 74 1C                je          std::_Func_impl<<lambda_cc3800d8206956f66c614ac730b2fea8>,std::allocator<int>,double,double>::_Do_call+47h (07FF73D2F9867h)  
+00007FF73D2F984B 0F 1F 44 00 00       nop         dword ptr [rax+rax]  
+00007FF73D2F9850 0F 28 CA             movaps      xmm1,xmm2  
+00007FF73D2F9853 48 FF C1             inc         rcx  
+00007FF73D2F9856 F2 0F 59 0A          mulsd       xmm1,mmword ptr [rdx]  
+00007FF73D2F985A 48 83 C2 08          add         rdx,8  
+00007FF73D2F985E F2 0F 58 C1          addsd       xmm0,xmm1  
+00007FF73D2F9862 49 3B C8             cmp         rcx,r8  
+   209: 		return (_Invoke_ret(_Forced<_Rx>(), _Callee(),
+00007FF73D2F9865 75 E9                jne         std::_Func_impl<<lambda_cc3800d8206956f66c614ac730b2fea8>,std::allocator<int>,double,double>::_Do_call+30h (07FF73D2F9850h)  
+   210: 			_STD forward<_Types>(_Args)...));
+   211: 		}
+00007FF73D2F9867 C3                   ret  
