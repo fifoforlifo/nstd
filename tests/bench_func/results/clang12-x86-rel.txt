@@ -1,6 +1,6 @@
-nstd::function took 7.6873e+007 cycles.
- std::function took 8.36684e+007 cycles.
-function ptr   took 7.9919e+007 cycles.
- std / fnp = 1.04692
-nstd / fnp = 0.961887
-nstd / std = 0.918782
+nstd::function took 6.57148e+007 cycles.
+ std::function took 8.31862e+007 cycles.
+function ptr   took 8.06701e+007 cycles.
+ std / fnp = 1.03119
+nstd / fnp = 0.814612
+nstd / std = 0.789973

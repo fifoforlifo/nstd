@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <utility>
 #include "noinit.hpp"
+#include "compiler_hints.hpp"
 
 #if _MSC_VER
 #pragma warning(push)
@@ -20,7 +21,7 @@ namespace nstd {
         typedef func_base<TRet, TArgs...> This;
 
     private:
-        typedef TRet(*fn_type)(char* obj, TArgs&&... args);
+        typedef TRet(NSTD_VECTORCALL*fn_type)(char* obj, TArgs&&... args);
         fn_type m_fn;
         char* m_obj;
 
@@ -99,7 +100,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet invoke(char* obj, TArgs&&... args)
+                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs&&... args)
                 {
                     fn_raw fn = (fn_raw)obj;
                     return fn(std::forward<TArgs>(args)...);
@@ -114,7 +115,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet invoke(char* obj, TArgs&&... args)
+                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs&&... args)
                 {
                     FuncObj& fnobj = (FuncObj&)*obj;
                     return fnobj(std::forward<TArgs>(args)...);
