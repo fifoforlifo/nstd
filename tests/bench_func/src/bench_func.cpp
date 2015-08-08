@@ -54,7 +54,7 @@ struct Test
         if (!dd) {
             dd = &add20;
         }
-        int NUM_VALUES = 100000;
+        int NUM_VALUES = 10 * 1000 * 1000;
         double sum = 0;
         for (int i = 0; i < NUM_VALUES; ++i) {
             sum += dd(i);
