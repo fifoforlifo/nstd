@@ -34,7 +34,7 @@ double TimeIt(int count, const char* pName, Func&& func)
     return avgDuration;
 }
 
-double add10(double x)
+inline double add10(double x)
 {
     return x + 10;
 }
@@ -43,6 +43,7 @@ double add20(double x)
     return x + 20;
 }
 
+bool g_false = false;
 double g_sum = 0.0;
 
 template <class Function>
@@ -51,7 +52,7 @@ struct Test
     static void invoke()
     {
         Function dd = [](double x) { return add10(x); };
-        if (!dd) {
+        if (g_false) {
             dd = &add20;
         }
         int NUM_VALUES = 10 * 1000 * 1000;
@@ -63,11 +64,19 @@ struct Test
     }
 };
 
-int main()
+int main(int argc, char** argv)
 {
-    double fnp_val  = TimeIt(10, "function ptr  ", &Test<double(*)(double)>::invoke);
-    double std_val  = TimeIt(10, " std::function", &Test<std::function<double(double)>>::invoke);
+    (void)argv;
+    if (argc > 1000)
+        g_false = true;
+
+    TimeIt(10, "nstd::function", &Test<nstd::function<double(double)>>::invoke);
+    TimeIt(10, " std::function", &Test<std::function<double(double)>>::invoke);
+    TimeIt(10, "function ptr  ", &Test<double(*)(double)>::invoke);
+
     double nstd_val = TimeIt(10, "nstd::function", &Test<nstd::function<double(double)>>::invoke);
+    double std_val  = TimeIt(10, " std::function", &Test<std::function<double(double)>>::invoke);
+    double fnp_val  = TimeIt(10, "function ptr  ", &Test<double(*)(double)>::invoke);
 
     std::cout << " std / fnp = " <<  std_val / fnp_val << std::endl;
     std::cout << "nstd / fnp = " << nstd_val / fnp_val << std::endl;
