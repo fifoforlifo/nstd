@@ -21,7 +21,7 @@ nstd library
 *   Generic assignment.
     **  General support for construct-only types.
 *   Support for external type-traits via decltype(adl_function()).
-*   Type-erased allocator support.
+*   Custom allocator support.
     **  With support for memory-pool *instances*.  As opposed to STL allocator which must be global.
 *   Smart Pointers
     **  More policy options, so you can opt for true interface parity with pointers.
@@ -35,10 +35,10 @@ nstd library
     **  Iterator parity across associative and non-associative types.
     **  Smoother interoperability between containers of the same essential type, that differ
         only by type-traits or other template args.
-*   nstd::Func, a better version of std::function
+*   nstd::function, a better version of std::function
     **  Generic assignment support.  Solves the "non-copyable lambda" problem.
     **  Small-buffer optimization controllable by user.
-        *** auto func = nstd::MakeFunction([=foo]() {return foo;});
+        *** auto func = nstd::make_function([=foo]() {return foo;});
     **  As copyable and movable as the underlying bound type.
         *** Exceptional mode: throws
         *** Non-exceptional mode: rhs unchanged, and lhs set to "null" state.
@@ -214,5 +214,17 @@ aka Binary-Traversal Iterators
 
 
 
+== Type Erasure "Framework"
+
+Factor the problem into:
+
+*   Interface: any type, although the point is to have virtual functions and references to
+    mandatory data members.
+*   Underlying: object that is structurally similar to an interface, but doesn't
+    inherit from it.
+*   Adapter: implements an interface, by holding and forwarding to the underlying
+*   make_adapter: free function callable by ADL to convert an underlying into an interface
+*   Container: like a smart pointer on an interface, that calls make_adapter when needed
+    and supports value copy operations in certain cases
 
 
