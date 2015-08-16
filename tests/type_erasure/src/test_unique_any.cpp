@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include <functional>
-#include <nstd/unique_any.hpp>
+#include <nstd/any/holder.hpp>
+#include <nstd/any/unique_any.hpp>
 
 struct IRobot
 {
@@ -12,21 +13,7 @@ struct IRobot
 };
 
 template <class Object>
-class Holder
-{
-protected:
-    typedef typename std::decay<Object>::type Obj;
-    Obj m_obj;
-
-public:
-    Holder(Object&& obj)
-        : m_obj(static_cast<Object&&>(obj))
-    {
-    }
-};
-
-template <class Object>
-class RobotAdapter : public Holder<Object>, public IRobot
+class RobotAdapter : public nstd::basic_holder<Object>, public IRobot
 {
 public:
     virtual void Move(int dx, int dy)
@@ -39,7 +26,7 @@ public:
     }
 
     RobotAdapter(Object&& obj)
-        : Holder<Object>(static_cast<Object&&>(obj))
+        : nstd::basic_holder<Object>(static_cast<Object&&>(obj))
         , IRobot(this->m_obj.mana)
     {
     }
