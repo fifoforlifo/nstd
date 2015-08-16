@@ -121,6 +121,11 @@ namespace nstd {
         {
             return m_p_object;
         }
+
+        explicit operator bool() const
+        {
+            return !!m_p_object;
+        }
     };
 
 } // namespace nstd
