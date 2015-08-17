@@ -2,7 +2,7 @@
 
 #include "holder.hpp"
 #include "../byte_pool_default.hpp"
-#include <new>
+#include "../noinit.hpp"
 
 #if _MSC_VER
 #pragma warning(push)
@@ -19,6 +19,7 @@ namespace nstd {
         typedef unique_any<Interface> This;
 
     private:
+        template <class Other> friend class unique_any;
         Interface* m_p_interface;
         any::holder_iface* m_p_holder;
         byte_pool* m_p_byte_pool;
@@ -45,8 +46,8 @@ namespace nstd {
 
         void move_init(This&& rhs)
         {
-            m_p_holder = rhs.m_p_holder;
             m_p_interface = rhs.m_p_interface;
+            m_p_holder = rhs.m_p_holder;
             m_p_byte_pool = rhs.m_p_byte_pool;
             rhs.m_p_holder = nullptr;
             rhs.m_p_interface = nullptr;
@@ -72,6 +73,10 @@ namespace nstd {
             m_p_holder = p_holder;
             m_p_interface = &p_holder->get_adapter();
             return true;
+        }
+
+        unique_any(noinit_t)
+        {
         }
 
     public:
@@ -131,6 +136,18 @@ namespace nstd {
         explicit operator bool() const
         {
             return !!m_p_interface;
+        }
+
+        template <class Other>
+        unique_any<Other> move_as()
+        {
+            unique_any<Other> other = noinit_t();
+            other.m_p_interface = static_cast<Other*>(m_p_interface);
+            other.m_p_holder = m_p_holder;
+            other.m_p_byte_pool = m_p_byte_pool;
+            m_p_interface = nullptr;
+            m_p_holder = nullptr;
+            return static_cast<unique_any<Other>&&>(other);
         }
     };
 

@@ -55,8 +55,8 @@ namespace nstd {
 
         void move_init(This&& rhs)
         {
-            m_p_holder = rhs.m_p_holder;
             m_p_interface = rhs.m_p_interface;
+            m_p_holder = rhs.m_p_holder;
             m_p_byte_pool = rhs.m_p_byte_pool;
             rhs.m_p_holder = nullptr;
             rhs.m_p_interface = nullptr;

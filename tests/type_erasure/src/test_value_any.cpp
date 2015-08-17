@@ -39,6 +39,12 @@ TEST(TypeErasure, value_any_as)
     typedef nstd::value_any<ICat> AnyCat;
 
     {
+        AnyAnimal animal = AnyDog(Dog10()).move_as<IAnimal>();
+        EXPECT_EQ(1, animal->Sleep());
+        animal = AnyCat(Cat20()).move_as<IAnimal>();
+        EXPECT_EQ(2, animal->Sleep());
+    }
+    {
         std::vector<AnyAnimal> animals;
         animals.emplace_back(AnyDog(Dog10()).move_as<IAnimal>());
         animals.emplace_back(AnyCat(Cat20()).move_as<IAnimal>());
