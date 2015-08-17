@@ -2,7 +2,6 @@
 
 #include "holder.hpp"
 #include "../byte_pool_default.hpp"
-#include <new>
 
 #if _MSC_VER
 #pragma warning(push)
@@ -13,10 +12,10 @@
 namespace nstd {
 
     template <class Interface>
-    class unique_any
+    class value_any
     {
     public:
-        typedef unique_any<Interface> This;
+        typedef value_any<Interface> This;
 
     private:
         Interface* m_p_interface;
@@ -24,11 +23,9 @@ namespace nstd {
         byte_pool* m_p_byte_pool;
 
     private: // deleted
-        unique_any(const This& rhs);
-        unique_any(This& rhs);
-        unique_any(const This&& rhs);
-        This& operator=(const This& rhs);
-        This& operator=(This& rhs);
+        value_any(const This& rhs);
+        value_any(This& rhs);
+        value_any(const This&& rhs);
         This& operator=(const This&& rhs);
 
     private:
@@ -41,6 +38,23 @@ namespace nstd {
                 m_p_holder = nullptr;
                 m_p_interface = nullptr;
             }
+        }
+
+        bool copy_init(const This& rhs)
+        {
+            if (!rhs)
+            {
+                m_p_holder = nullptr;
+                m_p_interface = nullptr;
+            }
+            m_p_holder = rhs.m_p_holder->alloc_copy(m_p_byte_pool);
+            if (!m_p_holder)
+            {
+                m_p_interface = nullptr;
+                return false;
+            }
+            m_p_interface = (Interface*)((char*)m_p_holder + ((char*)rhs.m_p_interface - (char*)rhs.m_p_holder));
+            return true;
         }
 
         void move_init(This&& rhs)
@@ -75,7 +89,7 @@ namespace nstd {
         }
 
     public:
-        ~unique_any()
+        ~value_any()
         {
             if (m_p_holder)
             {
@@ -83,28 +97,41 @@ namespace nstd {
                 m_p_byte_pool->release((char*)m_p_holder);
             }
         }
-        unique_any()
+        value_any()
             : m_p_interface(), m_p_holder()
         {
             m_p_byte_pool = &get_default_byte_pool();
         }
-        unique_any(std::nullptr_t)
+        value_any(std::nullptr_t)
             : m_p_interface(), m_p_holder()
         {
             m_p_byte_pool = &get_default_byte_pool();
         }
-        unique_any(This&& rhs)
+        value_any(This&& rhs)
         {
+            m_p_byte_pool = &get_default_byte_pool();
             move_init(static_cast<This&&>(rhs));
         }
         template <class Object>
-        unique_any(Object&& obj)
+        value_any(Object&& obj)
             : m_p_interface(), m_p_holder()
         {
             m_p_byte_pool = &get_default_byte_pool();
             assign_object(static_cast<Object&&>(obj));
         }
 
+        This& operator=(const This& rhs)
+        {
+            release();
+            copy_init(rhs);
+            return *this;
+        }
+        This& operator=(This& rhs)
+        {
+            release();
+            copy_init(rhs);
+            return *this;
+        }
         This& operator=(This&& rhs)
         {
             release();

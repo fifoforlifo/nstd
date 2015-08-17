@@ -1,4 +1,4 @@
-import os, pynja, repo
+﻿import os, pynja, repo
 
 @pynja.project
 class test_type_erasure(repo.CppProject):
@@ -11,6 +11,7 @@ class test_type_erasure(repo.CppProject):
 
         sources = [
             "src/test_unique_any.cpp",
+            "src/test_value_any.cpp",
             "src/test_type_erasure_main.cpp",
         ]
 

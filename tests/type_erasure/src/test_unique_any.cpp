@@ -2,74 +2,7 @@
 #include <functional>
 #include <nstd/any/holder.hpp>
 #include <nstd/any/unique_any.hpp>
-
-struct IRobot
-{
-    virtual void Move(int dx, int dy) = 0;
-    virtual int GetHealth() const = 0;
-    int& mana;
-
-    IRobot(int& mana_) : mana(mana_) {}
-};
-
-template <class Object>
-class RobotAdapter : public nstd::basic_holder<Object>, public IRobot
-{
-public:
-    virtual void Move(int dx, int dy)
-    {
-        this->m_obj.Move(dx, dy);
-    }
-    virtual int GetHealth() const
-    {
-        return this->m_obj.GetHealth();
-    }
-
-    RobotAdapter(Object&& obj)
-        : nstd::basic_holder<Object>(static_cast<Object&&>(obj))
-        , IRobot(this->m_obj.mana)
-    {
-    }
-};
-
-template <class Object>
-RobotAdapter<Object> select_adapter(IRobot*, Object&& obj);
-
-struct DummyRobot
-{
-    void Move(int dx, int dy)
-    {
-        (void)dx;
-        (void)dy;
-    }
-    int GetHealth() const
-    {
-        return 10;
-    }
-    int mana;
-
-    DummyRobot()
-        : mana(3)
-    {}
-};
-
-struct CrazyRobot
-{
-    void Move(int dx, int dy)
-    {
-        (void)dx;
-        (void)dy;
-    }
-    int GetHealth() const
-    {
-        return 1;
-    }
-    int mana;
-
-    CrazyRobot()
-        : mana(1000)
-    {}
-};
+#include "test_type_erasure_common.h"
 
 TEST(TypeErasure, unique_any)
 {

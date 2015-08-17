@@ -51,7 +51,7 @@ namespace nstd {
         {}
         fnobj_adapter(TObj&& rhs)
             : fnobj_iface(sizeof(*this), std::is_copy_constructible<TObj>::value)
-            , m_obj(std::move(rhs))
+            , m_obj(static_cast<TObj&&>(rhs))
         {}
 
         virtual fnobj_iface* copy_to(char* dst) const
