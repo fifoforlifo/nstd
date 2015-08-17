@@ -22,12 +22,6 @@ namespace nstd {
         any::holder_iface* m_p_holder;
         byte_pool* m_p_byte_pool;
 
-    private: // deleted
-        value_any(const This& rhs);
-        value_any(This& rhs);
-        value_any(const This&& rhs);
-        This& operator=(const This&& rhs);
-
     private:
         void release()
         {
@@ -107,6 +101,21 @@ namespace nstd {
         {
             m_p_byte_pool = &get_default_byte_pool();
         }
+        value_any(const This& rhs)
+        {
+            m_p_byte_pool = &get_default_byte_pool();
+            copy_init(rhs);
+        }
+        value_any(This& rhs)
+        {
+            m_p_byte_pool = &get_default_byte_pool();
+            copy_init(rhs);
+        }
+        value_any(const This&& rhs)
+        {
+            m_p_byte_pool = &get_default_byte_pool();
+            copy_init(rhs);
+        }
         value_any(This&& rhs)
         {
             m_p_byte_pool = &get_default_byte_pool();
@@ -127,6 +136,12 @@ namespace nstd {
             return *this;
         }
         This& operator=(This& rhs)
+        {
+            release();
+            copy_init(rhs);
+            return *this;
+        }
+        This& operator=(const This&& rhs)
         {
             release();
             copy_init(rhs);
