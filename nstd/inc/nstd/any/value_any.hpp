@@ -31,8 +31,8 @@ namespace nstd {
             {
                 m_p_holder->~holder_iface();
                 m_p_byte_pool->release((char*)m_p_holder);
-                m_p_holder = nullptr;
                 m_p_interface = nullptr;
+                m_p_holder = nullptr;
             }
         }
 
@@ -40,8 +40,8 @@ namespace nstd {
         {
             if (!rhs)
             {
-                m_p_holder = nullptr;
                 m_p_interface = nullptr;
+                m_p_holder = nullptr;
             }
             m_p_holder = rhs.m_p_holder->alloc_copy(m_p_byte_pool);
             if (!m_p_holder)
@@ -79,8 +79,8 @@ namespace nstd {
                 m_p_byte_pool->release(p_buf);
                 return false;
             }
-            m_p_holder = p_holder;
             m_p_interface = &p_holder->get_adapter();
+            m_p_holder = p_holder;
             return true;
         }
 
