@@ -43,6 +43,11 @@ TEST(TypeErasure, value_any_as)
         EXPECT_EQ(1, animal->Sleep());
         animal = AnyCat(Cat20()).move_as<IAnimal>();
         EXPECT_EQ(2, animal->Sleep());
+        AnyCat cat = animal.move_as<ICat>();
+        EXPECT_EQ(2, cat->Sleep());
+        EXPECT_TRUE(!animal);
+        //animal = cat.move_as<IAnimal>();
+        //AnyDog dog = animal.move_as<IRobot>();  // compile error
     }
     {
         std::vector<AnyAnimal> animals;

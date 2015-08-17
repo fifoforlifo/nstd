@@ -34,7 +34,7 @@ TEST(TypeErasure, unique_any)
         pRobot = AnyRobot(CrazyRobot());
         EXPECT_EQ(1000, pRobot->mana);
         AnyRobot pRobot2;
-        //pRobot = pRobot2;
+        //pRobot = pRobot2;  // compile error
         pRobot = std::move(pRobot2);
         EXPECT_TRUE(!pRobot);
     }
