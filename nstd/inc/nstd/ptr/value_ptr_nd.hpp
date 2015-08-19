@@ -11,14 +11,14 @@
 namespace nstd {
 
     template <class Interface>
-    class value_ptr
+    class value_ptr_nd
     {
     public:
-        typedef value_ptr<Interface> This;
+        typedef value_ptr_nd<Interface> This;
 
     private:
-        template <class Other> friend class value_ptr;
-        typedef Interface* (*AllocCopyFn)(const Interface* pRhs);
+        template <class Other> friend class value_ptr_nd;
+        typedef Interface* (*AllocCopyFn)(const Interface* p_rhs);
 
         Interface* m_p_interface;
         AllocCopyFn m_copy;
@@ -64,9 +64,9 @@ namespace nstd {
         }
 
         template <class Object>
-        static Interface* AllocCopy(const Interface* pRhs)
+        static Interface* AllocCopy(const Interface* p_rhs)
         {
-            return new (std::nothrow) Object(*(const Object*)pRhs);
+            return new (std::nothrow) Object(*(const Object*)p_rhs);
         }
 
         template <class Object>
@@ -78,47 +78,47 @@ namespace nstd {
             return true;
         }
 
-        value_ptr(noinit_t)
+        value_ptr_nd(noinit_t)
         {
         }
 
     public:
-        ~value_ptr()
+        ~value_ptr_nd()
         {
             if (m_p_interface)
             {
                 delete m_p_interface;
             }
         }
-        value_ptr()
+        value_ptr_nd()
             : m_p_interface(), m_copy()
         {
         }
-        value_ptr(std::nullptr_t)
+        value_ptr_nd(std::nullptr_t)
             : m_p_interface(), m_copy()
         {
         }
-        value_ptr(const This& rhs)
+        value_ptr_nd(const This& rhs)
         {
             copy_init(rhs);
         }
-        value_ptr(This& rhs)
+        value_ptr_nd(This& rhs)
         {
             copy_init(rhs);
         }
-        value_ptr(const This&& rhs)
+        value_ptr_nd(const This&& rhs)
         {
             copy_init(rhs);
         }
-        value_ptr(This&& rhs)
+        value_ptr_nd(This&& rhs)
         {
             move_init(static_cast<This&&>(rhs));
         }
         template <class Object>
-        value_ptr(Object&& obj)
+        value_ptr_nd(Object* p_obj)
             : m_p_interface(), m_copy()
         {
-            assign_object(static_cast<Object&&>(obj));
+            assign_object(p_obj);
         }
 
         This& operator=(const This& rhs)
@@ -146,10 +146,10 @@ namespace nstd {
             return *this;
         }
         template <class Object>
-        This& operator=(Object&& obj)
+        This& operator=(Object* p_obj)
         {
             release();
-            assign_object(static_cast<Object&&>(obj));
+            assign_object(p_obj);
             return *this;
         }
 
@@ -168,23 +168,23 @@ namespace nstd {
         }
 
         template <class Other>
-        value_ptr<Other> copy_as() const
+        value_ptr_nd<Other> copy_as() const
         {
-            value_ptr<Other> other;
+            value_ptr_nd<Other> other;
             other.m_p_interface = (Other*)m_copy(m_p_interface);
-            other.m_copy = (typename value_ptr<Other>::AllocCopyFn)m_copy;
-            return static_cast<value_ptr<Other>&&>(other);
+            other.m_copy = (typename value_ptr_nd<Other>::AllocCopyFn)m_copy;
+            return static_cast<value_ptr_nd<Other>&&>(other);
         }
 
         template <class Other>
-        value_ptr<Other> move_as()
+        value_ptr_nd<Other> move_as()
         {
-            value_ptr<Other> other = noinit_t();
+            value_ptr_nd<Other> other = noinit_t();
             other.m_p_interface = (Other*)m_p_interface;
-            other.m_copy = (typename value_ptr<Other>::AllocCopyFn)m_copy;
+            other.m_copy = (typename value_ptr_nd<Other>::AllocCopyFn)m_copy;
             m_p_interface = nullptr;
             m_copy = nullptr;
-            return static_cast<value_ptr<Other>&&>(other);
+            return static_cast<value_ptr_nd<Other>&&>(other);
         }
     };
 
