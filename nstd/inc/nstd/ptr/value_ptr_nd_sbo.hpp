@@ -106,11 +106,12 @@ namespace nstd {
             }
         }
 
-        bool copy_init(const This& rhs)
+        template <class Rhs, size_t RhsSboSize>
+        bool copy_init(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
         {
             if (rhs.m_p_interface)
             {
-                m_p_interface = (Interface*)rhs.m_copy(m_sbo_buffer, SboSize, (const char*)rhs.m_p_interface);
+                m_p_interface = (Rhs*)rhs.m_copy(m_sbo_buffer, SboSize, (const char*)rhs.m_p_interface);
                 if (!m_p_interface)
                 {
                     m_copy = nullptr;
@@ -130,14 +131,14 @@ namespace nstd {
             }
         }
 
-        template <class Other>
-        bool move_init(value_ptr_nd_sbo<Other, SboSize>&& rhs)
+        template <class Rhs, size_t RhsSboSize, class Output = Rhs>
+        bool move_init(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs, Output* = nullptr)
         {
             if (rhs.m_p_interface)
             {
-                if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < SboSize)
+                if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
                 {
-                    m_p_interface = (Interface*)rhs.m_move(m_sbo_buffer, SboSize, (char*)rhs.m_p_interface);
+                    m_p_interface = (Output*)rhs.m_move(m_sbo_buffer, SboSize, (char*)rhs.m_p_interface);
                     if (!m_p_interface)
                     {
                         m_copy = nullptr;
@@ -147,7 +148,7 @@ namespace nstd {
                 }
                 else
                 {
-                    m_p_interface = (Interface*)rhs.m_p_interface;
+                    m_p_interface = (Output*)rhs.m_p_interface;
                 }
                 m_copy = rhs.m_copy;
                 m_move = rhs.m_move;
@@ -242,6 +243,26 @@ namespace nstd {
         {
             move_init(static_cast<This&&>(rhs));
         }
+        template <class Rhs, size_t RhsSboSize>
+        value_ptr_nd_sbo(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        {
+            copy_init(rhs);
+        }
+        template <class Rhs, size_t RhsSboSize>
+        value_ptr_nd_sbo(value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        {
+            copy_init(rhs);
+        }
+        template <class Rhs, size_t RhsSboSize>
+        value_ptr_nd_sbo(const value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
+        {
+            copy_init(rhs);
+        }
+        template <class Rhs, size_t RhsSboSize>
+        value_ptr_nd_sbo(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
+        {
+            move_init(std::move(rhs));
+        }
         template <class Object>
         value_ptr_nd_sbo(Object* p_obj)
             : m_p_interface(), m_copy(), m_move()
@@ -308,22 +329,22 @@ namespace nstd {
             return !!m_p_interface;
         }
 
-        template <class Other>
-        value_ptr_nd_sbo<Other, SboSize> copy_as() const
+        template <class Other, size_t OtherSboSize = SboSize>
+        value_ptr_nd_sbo<Other, OtherSboSize> copy_as() const
         {
-            value_ptr_nd_sbo<Other, SboSize> other;
+            value_ptr_nd_sbo<Other, OtherSboSize> other;
             other.m_p_interface = (Other*)m_copy(other.m_sbo_buffer, SboSize, (const char*)m_p_interface);
             other.m_copy = m_copy;
             other.m_move = m_move;
-            return static_cast<value_ptr_nd_sbo<Other, SboSize>&&>(other);
+            return std::move(other);
         }
 
-        template <class Other>
-        value_ptr_nd_sbo<Other, SboSize> move_as()
+        template <class Other, size_t OtherSboSize = SboSize>
+        value_ptr_nd_sbo<Other, OtherSboSize> move_as()
         {
-            value_ptr_nd_sbo<Other, SboSize> other = noinit_t();
-            other.move_init(std::move(*this));
-            return static_cast<value_ptr_nd_sbo<Other, SboSize>&&>(other);
+            value_ptr_nd_sbo<Other, OtherSboSize> other = noinit_t();
+            other.move_init(std::move(*this), (Other*)nullptr);
+            return std::move(other);
         }
     };
 

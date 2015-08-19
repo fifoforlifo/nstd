@@ -53,8 +53,8 @@ TEST(TypeErasure, value_ptr_nd)
 TEST(TypeErasure, value_ptr_nd_sbo)
 {
     typedef nstd::value_ptr_nd_sbo<INum, 0x80> INumValuePtr;
-    typedef nstd::value_ptr_nd_sbo<IBigNum, 0x80> BigNumValuePtr;
-    typedef nstd::value_ptr_nd_sbo<Num, 0x80> NumValuePtr;
+    typedef nstd::value_ptr_nd_sbo<IBigNum, 0x40> BigNumValuePtr;
+    typedef nstd::value_ptr_nd_sbo<Num, 0x20> NumValuePtr;
 
     {
         INumValuePtr pNumA = new Num{ 3 };
@@ -69,5 +69,9 @@ TEST(TypeErasure, value_ptr_nd_sbo)
         EXPECT_TRUE(!pNumC);
         pNumD->m_value = 5;
         EXPECT_EQ(5, pNumD->Value());
+        BigNumValuePtr pNumE = pNumD;
+        EXPECT_TRUE(!!pNumD && !!pNumE);
+        BigNumValuePtr pNumF = std::move(pNumD);
+        EXPECT_TRUE(!pNumD);
     }
 }

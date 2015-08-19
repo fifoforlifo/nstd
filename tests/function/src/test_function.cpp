@@ -52,7 +52,7 @@ TEST(Function, std_function)
             add2 = [](double x, double y) { return x + y; };
         }
         double seven = add2(3, 4);
-        EXPECT_EQ(17.0, seven);
+        EXPECT_EQ(37.0, seven);
     }
     {
         Heavy heavy;
@@ -96,7 +96,7 @@ TEST(Function, nstd_function)
             add2 = [](double x, double y) { return x + y; };
         }
         double seven = add2(3, 4);
-        EXPECT_EQ(17.0, seven);
+        EXPECT_EQ(37.0, seven);
     }
     {
         Heavy heavy;
