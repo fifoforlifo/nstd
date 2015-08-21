@@ -43,6 +43,20 @@ TEST(Function, std_function)
             int, int, int, int,
             int, int, int, int)> fn =
             [](
+                int a, int b, int c, int d,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int)
+            {
+                return a + b + c + d;
+            };
+        if (!fn)
+        {
+            fn = [](
                 int, int, int, int,
                 int, int, int, int,
                 int, int, int, int,
@@ -52,14 +66,11 @@ TEST(Function, std_function)
                 int, int, int, int,
                 int, int, int, int)
             {
-                return 3;
+                return 0;
             };
-        if (!(new (std::nothrow) char('A')))
-        {
-            fn = nullptr;
         }
         int x = fn(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8);
-        EXPECT_EQ(3, x);
+        EXPECT_EQ(4, x);
     }
     {
         std::function<double(double)> dd = (double(*)(double))&sin;
@@ -154,7 +165,7 @@ TEST(Function, nstd_function)
             int, int, int, int,
             int, int, int, int)> fn =
             [](
-                int, int, int, int,
+                int a, int b, int c, int d,
                 int, int, int, int,
                 int, int, int, int,
                 int, int, int, int,
@@ -163,13 +174,24 @@ TEST(Function, nstd_function)
                 int, int, int, int,
                 int, int, int, int)
         {
-            return 3;
+            return a + b + c + d;
         };
         if (!fn)
         {
-            fn = nullptr;
+            fn = [](
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int)
+            {
+                return 0;
+            };
         }
         int x = fn(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8);
-        EXPECT_EQ(3, x);
+        EXPECT_EQ(4, x);
     }
 }
