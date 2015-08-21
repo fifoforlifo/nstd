@@ -193,11 +193,12 @@ namespace nstd {
         value_ptr_nd<Other> move_as()
         {
             value_ptr_nd<Other> other;
-            if (!dynamic_cast<Other*>(m_p_interface))
+            Other* p_other = dynamic_cast<Other*>(m_p_interface);
+            if (!p_other)
             {
                 return std::move(other);
             }
-            other.m_p_interface = dynamic_cast<Other*>(m_p_interface);
+            other.m_p_interface = p_other;
             other.m_p_object = m_p_object;
             other.m_copy = (typename value_ptr_nd<Other>::AllocCopyFn)m_copy;
             m_p_interface = nullptr;
