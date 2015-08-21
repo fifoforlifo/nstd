@@ -33,6 +33,35 @@ TEST(Function, std_function)
     }
 #if !(__clang_major__ && _WIN32)
     {
+        std::function<int(
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int)> fn =
+            [](
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int)
+            {
+                return 3;
+            };
+        if (!(new (std::nothrow) char('A')))
+        {
+            fn = nullptr;
+        }
+        int x = fn(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8);
+        EXPECT_EQ(3, x);
+    }
+    {
         std::function<double(double)> dd = (double(*)(double))&sin;
         dd(1.0 * M_PI / 2);
         dd = [](double x) { return sin(x); };
@@ -113,5 +142,34 @@ TEST(Function, nstd_function)
         }
         double ip_value = inner_prod(1, 0, 0, 0);
         EXPECT_EQ(30.0, ip_value);
+    }
+    {
+        nstd::function<int(
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int,
+            int, int, int, int)> fn =
+            [](
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int,
+                int, int, int, int)
+        {
+            return 3;
+        };
+        if (!fn)
+        {
+            fn = nullptr;
+        }
+        int x = fn(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8);
+        EXPECT_EQ(3, x);
     }
 }
