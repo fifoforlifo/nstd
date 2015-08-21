@@ -42,6 +42,7 @@ namespace nstd {
             {
                 m_p_interface = nullptr;
                 m_p_holder = nullptr;
+                return true;
             }
             m_p_holder = rhs.m_p_holder->alloc_copy(m_p_byte_pool);
             if (!m_p_holder)

@@ -11,7 +11,12 @@ struct IBigNum : public INum
 {
     virtual int ValueHi() const = 0;
 };
-struct Num : public IBigNum
+struct IFloatNum
+{
+    virtual ~IFloatNum() {}
+    virtual float ValueFloat() const = 0;
+};
+struct Num : public IBigNum, IFloatNum
 {
     int m_value;
     virtual int Value() const
@@ -21,6 +26,10 @@ struct Num : public IBigNum
     virtual int ValueHi() const
     {
         return 0;
+    }
+    virtual float ValueFloat() const
+    {
+        return (float)m_value;
     }
     Num(int value)
         : m_value(value)
@@ -33,6 +42,7 @@ TEST(TypeErasure, value_ptr_nd)
     typedef nstd::value_ptr_nd<INum> INumValuePtr;
     typedef nstd::value_ptr_nd<IBigNum> BigNumValuePtr;
     typedef nstd::value_ptr_nd<Num> NumValuePtr;
+    typedef nstd::value_ptr_nd<IFloatNum> IFloatNumValuePtr;
 
     {
         INumValuePtr pNumA = new Num{ 3 };
@@ -47,6 +57,12 @@ TEST(TypeErasure, value_ptr_nd)
         NumValuePtr pNumD = pNumC.move_as<Num>();
         EXPECT_TRUE(!pNumC);
         EXPECT_EQ(pNumC_old, &*pNumD);
+        IFloatNumValuePtr pNumE = pNumD.copy_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumE->ValueFloat());
+        pNumE = pNumD.move_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumE->ValueFloat());
+        pNumD = pNumE.copy_as<Num>();
+        EXPECT_TRUE(!!pNumD);
     }
 }
 
