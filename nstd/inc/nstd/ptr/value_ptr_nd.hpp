@@ -1,5 +1,7 @@
 #pragma once
 
+#include "value_ptr_nd_sbo.hpp"
+
 #if _MSC_VER
 #pragma warning(push)
 #pragma warning (disable : 4521) // "multiple copy constructors specified"
@@ -8,6 +10,7 @@
 
 namespace nstd {
 
+#if 0
     template <class Interface>
     class value_ptr_nd
     {
@@ -183,7 +186,7 @@ namespace nstd {
             {
                 return std::move(other);
             }
-            other.m_p_interface = dynamic_cast<Other*>((Interface*)((char*)p_object + ((char*)m_p_interface - m_p_object)));
+            other.m_p_interface = dynamic_cast<Other*>((Interface*)(p_object + ((char*)m_p_interface - m_p_object)));
             other.m_p_object = p_object;
             other.m_copy = (typename value_ptr_nd<Other>::AllocCopyFn)m_copy;
             return std::move(other);
@@ -207,6 +210,10 @@ namespace nstd {
             return std::move(other);
         }
     };
+#else
+    // temporary hack until value_ptr_nd code can be fixed similar to _sbo
+    template <class Interface> using value_ptr_nd = value_ptr_nd_sbo<Interface, 1>;
+#endif
 
 } // namespace nstd
 

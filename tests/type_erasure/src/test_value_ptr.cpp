@@ -36,7 +36,6 @@ struct Num : public IBigNum, IFloatNum
     {}
 };
 
-
 TEST(TypeErasure, value_ptr_nd)
 {
     typedef nstd::value_ptr_nd<INum> INumValuePtr;
@@ -57,11 +56,16 @@ TEST(TypeErasure, value_ptr_nd)
         NumValuePtr pNumD = pNumC.move_as<Num>();
         EXPECT_TRUE(!pNumC);
         EXPECT_EQ(pNumC_old, &*pNumD);
-        IFloatNumValuePtr pNumE = pNumD.copy_as<IFloatNum>();
-        EXPECT_EQ(3.0f, pNumE->ValueFloat());
-        pNumE = pNumD.move_as<IFloatNum>();
-        EXPECT_EQ(3.0f, pNumE->ValueFloat());
-        pNumD = pNumE.copy_as<Num>();
+        BigNumValuePtr pNumE = pNumD;
+        EXPECT_TRUE(!!pNumD && !!pNumE);
+        pNumE = std::move(pNumD);
+        EXPECT_TRUE(!pNumD);
+        pNumD = Num(3);
+        IFloatNumValuePtr pNumF = pNumD.copy_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumF->ValueFloat());
+        pNumF = pNumD.move_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumF->ValueFloat());
+        pNumD = pNumF.copy_as<Num>();
         EXPECT_TRUE(!!pNumD);
     }
 }
@@ -71,6 +75,7 @@ TEST(TypeErasure, value_ptr_nd_sbo)
     typedef nstd::value_ptr_nd_sbo<INum, 0x80> INumValuePtr;
     typedef nstd::value_ptr_nd_sbo<IBigNum, 0x40> BigNumValuePtr;
     typedef nstd::value_ptr_nd_sbo<Num, 0x20> NumValuePtr;
+    typedef nstd::value_ptr_nd_sbo<IFloatNum, 0x30> IFloatNumValuePtr;
 
     {
         INumValuePtr pNumA = new Num{ 3 };
@@ -83,11 +88,17 @@ TEST(TypeErasure, value_ptr_nd_sbo)
         EXPECT_TRUE(&*pNumC != &*pNumB);
         NumValuePtr pNumD = pNumC.move_as<Num>();
         EXPECT_TRUE(!pNumC);
-        pNumD->m_value = 5;
-        EXPECT_EQ(5, pNumD->Value());
+        EXPECT_TRUE(!!pNumD);
         BigNumValuePtr pNumE = pNumD;
         EXPECT_TRUE(!!pNumD && !!pNumE);
-        BigNumValuePtr pNumF = std::move(pNumD);
+        pNumE = std::move(pNumD);
         EXPECT_TRUE(!pNumD);
+        pNumD = Num(3);
+        IFloatNumValuePtr pNumF = pNumD.copy_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumF->ValueFloat());
+        pNumF = pNumD.move_as<IFloatNum>();
+        EXPECT_EQ(3.0f, pNumF->ValueFloat());
+        pNumD = pNumF.copy_as<Num>();
+        EXPECT_TRUE(!!pNumD);
     }
 }

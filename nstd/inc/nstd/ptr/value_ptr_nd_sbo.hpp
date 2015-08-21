@@ -83,87 +83,135 @@ namespace nstd {
         template <class Other, size_t OtherSize> friend class value_ptr_nd_sbo;
 
         Interface* m_p_interface;
+        char* m_p_object;
         CopyFn m_copy;
         MoveFn m_move;
         char m_sbo_buffer[SboSize];
 
     private:
+        bool null_init(bool result)
+        {
+            m_p_interface = nullptr;
+            m_p_object = nullptr;
+            m_copy = nullptr;
+            m_move = nullptr;
+            return result;
+        }
+
         void release()
         {
             if (m_p_interface)
             {
-                if (uintptr_t((char*)m_p_interface - m_sbo_buffer) < SboSize)
+                m_p_interface->~Interface();
+                if (uintptr_t((char*)m_p_object - m_sbo_buffer) < SboSize)
                 {
-                    m_p_interface->~Interface();
                 }
                 else
                 {
-                    delete m_p_interface;
-                    m_p_interface = nullptr;
+                    delete[] m_p_object;
                 }
-                m_copy = nullptr;
-                m_move = nullptr;
+                null_init(true);
             }
         }
 
         template <class Rhs, size_t RhsSboSize>
-        bool copy_init(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        bool copy_init_static(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
         {
-            if (rhs.m_p_interface)
+            if (!rhs.m_p_interface)
             {
-                m_p_interface = (Rhs*)rhs.m_copy(m_sbo_buffer, SboSize, (const char*)rhs.m_p_interface);
-                if (!m_p_interface)
-                {
-                    m_copy = nullptr;
-                    m_move = nullptr;
-                    return false;
-                }
-                m_copy = rhs.m_copy;
-                m_move = rhs.m_move;
-                return true;
+                return null_init(true);
             }
-            else
+            char* p_object = rhs.m_copy(m_sbo_buffer, SboSize, rhs.m_p_object);
+            if (!p_object)
             {
-                m_p_interface = nullptr;
-                m_copy = nullptr;
-                m_move = nullptr;
-                return true;
+                return null_init(false);
             }
+            m_p_interface = static_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+            m_p_object = p_object;
+            m_copy = rhs.m_copy;
+            m_move = rhs.m_move;
+            return true;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        bool copy_init_dynamic(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        {
+            if (!dynamic_cast<Interface*>(rhs.m_p_interface))
+            {
+                return null_init(true);
+            }
+            char* p_object = rhs.m_copy(m_sbo_buffer, SboSize, rhs.m_p_object);
+            if (!p_object)
+            {
+                return null_init(false);
+            }
+            m_p_interface = dynamic_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+            m_p_object = p_object;
+            m_copy = rhs.m_copy;
+            m_move = rhs.m_move;
+            return true;
         }
 
-        template <class Rhs, size_t RhsSboSize, class Output = Rhs>
-        bool move_init(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs, Output* = nullptr)
+        template <class Rhs, size_t RhsSboSize>
+        bool move_init_static(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
         {
-            if (rhs.m_p_interface)
+            Interface* p_interface = static_cast<Interface*>(rhs.m_p_interface);
+            if (!p_interface)
             {
-                if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
+                return null_init(true);
+            }
+            if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
+            {
+                char* p_object = rhs.m_move(m_sbo_buffer, SboSize, rhs.m_p_object);
+                if (!p_object)
                 {
-                    m_p_interface = (Output*)rhs.m_move(m_sbo_buffer, SboSize, (char*)rhs.m_p_interface);
-                    if (!m_p_interface)
-                    {
-                        m_copy = nullptr;
-                        m_move = nullptr;
-                        return false;
-                    }
+                    return null_init(false);
                 }
-                else
-                {
-                    m_p_interface = (Output*)rhs.m_p_interface;
-                }
-                m_copy = rhs.m_copy;
-                m_move = rhs.m_move;
-                rhs.m_p_interface = nullptr;
-                rhs.m_copy = nullptr;
-                rhs.m_move = nullptr;
-                return true;
+                m_p_interface = static_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+                m_p_object = p_object;
             }
             else
             {
-                m_p_interface = nullptr;
-                m_copy = nullptr;
-                m_move = nullptr;
-                return true;
+                m_p_interface = p_interface;
+                m_p_object = rhs.m_p_object;
             }
+            m_copy = rhs.m_copy;
+            m_move = rhs.m_move;
+            rhs.m_p_interface = nullptr;
+            rhs.m_p_object = nullptr;
+            rhs.m_copy = nullptr;
+            rhs.m_move = nullptr;
+            return true;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        bool move_init_dynamic(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
+        {
+            Interface* p_interface = dynamic_cast<Interface*>(rhs.m_p_interface);
+            if (!p_interface)
+            {
+                return null_init(true);
+            }
+            if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
+            {
+                char* p_object = rhs.m_move(m_sbo_buffer, SboSize, rhs.m_p_object);
+                if (!p_object)
+                {
+                    return null_init(false);
+                }
+                m_p_interface = dynamic_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+                m_p_object = p_object;
+            }
+            else
+            {
+                m_p_interface = p_interface;
+                m_p_object = rhs.m_p_object;
+            }
+            m_copy = rhs.m_copy;
+            m_move = rhs.m_move;
+            rhs.m_p_interface = nullptr;
+            rhs.m_p_object = nullptr;
+            rhs.m_copy = nullptr;
+            rhs.m_move = nullptr;
+            return true;
         }
 
         template <class Object>
@@ -171,6 +219,7 @@ namespace nstd {
         {
             typedef typename std::decay<Object>::type Obj;
             m_p_interface = p_obj;
+            m_p_object = (char*)p_obj;
             m_copy = &detail::value_ptr_nd_sbo_detail<Obj>::copy;
             m_move = &detail::value_ptr_nd_sbo_detail<Obj>::move;
             return true;
@@ -184,6 +233,7 @@ namespace nstd {
             {
                 Object* p_object = new (m_sbo_buffer) Obj(static_cast<Object&&>(obj));
                 m_p_interface = p_object;
+                m_p_object = (char*)p_object;
             }
             else
             {
@@ -194,6 +244,8 @@ namespace nstd {
                 }
                 Object* p_object = new (buf.p) Object(static_cast<Object&&>(obj));
                 m_p_interface = p_object;
+                m_p_object = (char*)p_object;
+                buf.p = nullptr;
             }
             m_copy = &detail::value_ptr_nd_sbo_detail<Obj>::copy;
             m_move = &detail::value_ptr_nd_sbo_detail<Obj>::move;
@@ -209,69 +261,69 @@ namespace nstd {
         {
             if (m_p_interface)
             {
+                m_p_interface->~Interface();
                 if (uintptr_t((char*)m_p_interface - m_sbo_buffer) < SboSize)
                 {
-                    m_p_interface->~Interface();
                 }
                 else
                 {
-                    delete m_p_interface;
+                    delete[] m_p_object;
                 }
             }
         }
         value_ptr_nd_sbo()
-            : m_p_interface(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_copy(), m_move()
         {
         }
         value_ptr_nd_sbo(std::nullptr_t)
-            : m_p_interface(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_copy(), m_move()
         {
         }
         value_ptr_nd_sbo(const This& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         value_ptr_nd_sbo(This& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         value_ptr_nd_sbo(const This&& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         value_ptr_nd_sbo(This&& rhs)
         {
-            move_init(static_cast<This&&>(rhs));
+            move_init_static(std::move(rhs));
         }
         template <class Rhs, size_t RhsSboSize>
         value_ptr_nd_sbo(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         template <class Rhs, size_t RhsSboSize>
         value_ptr_nd_sbo(value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         template <class Rhs, size_t RhsSboSize>
         value_ptr_nd_sbo(const value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
         {
-            copy_init(rhs);
+            copy_init_static(rhs);
         }
         template <class Rhs, size_t RhsSboSize>
         value_ptr_nd_sbo(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
         {
-            move_init(std::move(rhs));
+            move_init_static(std::move(rhs));
         }
         template <class Object>
         value_ptr_nd_sbo(Object* p_obj)
-            : m_p_interface(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_copy(), m_move()
         {
             assign_object_ptr(p_obj);
         }
         template <class Object, class U = typename std::enable_if<!std::is_pointer<typename std::remove_reference<Object>::type>::value>::type>
         value_ptr_nd_sbo(Object&& obj)
-            : m_p_interface(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_copy(), m_move()
         {
             assign_object_value(static_cast<Object&&>(obj));
         }
@@ -279,25 +331,53 @@ namespace nstd {
         This& operator=(const This& rhs)
         {
             release();
-            copy_init(rhs);
+            copy_init_static(rhs);
             return *this;
         }
         This& operator=(This& rhs)
         {
             release();
-            copy_init(rhs);
+            copy_init_static(rhs);
             return *this;
         }
         This& operator=(const This&& rhs)
         {
             release();
-            copy_init(rhs);
+            copy_init_static(rhs);
             return *this;
         }
         This& operator=(This&& rhs)
         {
             release();
-            move_init(static_cast<This&&>(rhs));
+            move_init_static(static_cast<This&&>(rhs));
+            return *this;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        This& operator=(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        {
+            release();
+            copy_init_static(rhs);
+            return *this;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        This& operator=(value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
+        {
+            release();
+            copy_init_static(rhs);
+            return *this;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        This& operator=(const value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
+        {
+            release();
+            copy_init_static(rhs);
+            return *this;
+        }
+        template <class Rhs, size_t RhsSboSize>
+        This& operator=(value_ptr_nd_sbo<Rhs, RhsSboSize>&& rhs)
+        {
+            release();
+            move_init_static(std::move(rhs));
             return *this;
         }
         template <class Object, class U = typename std::enable_if<std::is_pointer<typename std::remove_reference<Object>::type>::value>::type>
@@ -332,10 +412,8 @@ namespace nstd {
         template <class Other, size_t OtherSboSize = SboSize>
         value_ptr_nd_sbo<Other, OtherSboSize> copy_as() const
         {
-            value_ptr_nd_sbo<Other, OtherSboSize> other;
-            other.m_p_interface = (Other*)m_copy(other.m_sbo_buffer, SboSize, (const char*)m_p_interface);
-            other.m_copy = m_copy;
-            other.m_move = m_move;
+            value_ptr_nd_sbo<Other, OtherSboSize> other = noinit_t();
+            other.copy_init_dynamic(*this);
             return std::move(other);
         }
 
@@ -343,7 +421,7 @@ namespace nstd {
         value_ptr_nd_sbo<Other, OtherSboSize> move_as()
         {
             value_ptr_nd_sbo<Other, OtherSboSize> other = noinit_t();
-            other.move_init(std::move(*this), (Other*)nullptr);
+            other.move_init_dynamic(std::move(*this));
             return std::move(other);
         }
     };
