@@ -135,7 +135,8 @@ namespace nstd {
         template <class Rhs, size_t RhsSboSize>
         bool copy_init_dynamic(const value_ptr_nd_sbo<Rhs, RhsSboSize>& rhs)
         {
-            if (!dynamic_cast<Interface*>(rhs.m_p_interface))
+            Interface* p_interface = dynamic_cast<Interface*>(rhs.m_p_interface);
+            if (!p_interface)
             {
                 return null_init(true);
             }
@@ -144,7 +145,7 @@ namespace nstd {
             {
                 return null_init(false);
             }
-            m_p_interface = dynamic_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+            m_p_interface = (Interface*)(p_object + ((char*)p_interface - rhs.m_p_object));
             m_p_object = p_object;
             m_copy = rhs.m_copy;
             m_move = rhs.m_move;
