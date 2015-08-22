@@ -12,13 +12,13 @@ namespace nstd { namespace any {
         virtual holder_iface* alloc_copy(byte_pool* p_byte_pool) const = 0;
     };
 
+    // Object must be a decayed type.
     template <class Object, class Adapter>
     class holder : public holder_iface
     {
     protected:
         typedef holder<Object, Adapter> This;
-        typedef typename std::decay<Object>::type Obj;
-        Obj m_obj;
+        Object m_obj;
         Adapter m_adapter;
 
     private:
@@ -45,12 +45,12 @@ namespace nstd { namespace any {
         }
 
     public:
-        holder(const Obj& obj)
+        holder(const Object& obj)
             : m_obj(obj)
             , m_adapter(m_obj)
         {
         }
-        holder(Obj&& obj)
+        holder(Object&& obj)
             : m_obj(static_cast<Object&&>(obj))
             , m_adapter(m_obj)
         {
