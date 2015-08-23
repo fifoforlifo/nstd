@@ -132,7 +132,7 @@ namespace nstd {
             return !!m_fn;
         }
 
-        TRet operator()(typename value_to_cref<TArgs>::type... args) const
+        inline TRet operator()(typename value_to_cref<TArgs>::type... args) const
         {
             return m_fn(m_obj, std::forward<typename value_to_cref<TArgs>::type>(args)...);
         }

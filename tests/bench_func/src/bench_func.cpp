@@ -75,6 +75,24 @@ static void test(Function dd)
     g_sum = sum;
 }
 
+static void test_nstd()
+{
+    auto lambda = [](double x) { return add10(x); };
+    nstd::function<double(double)> nstd_fn = lambda;
+    test(nstd_fn);
+}
+static void test_std()
+{
+    auto lambda = [](double x) { return add10(x); };
+    std::function<double(double)> nstd_fn = lambda;
+    test(nstd_fn);
+}
+static void test_fnptr()
+{
+    test(&add10);
+}
+
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -100,23 +118,18 @@ int main(int argc, char** argv)
 
     int repeats = 1;
 
-    double y = 0;
-    auto lambda = [=](double x) { (void)y; return add10(x); };
-    nstd::function<double(double)> nstd_fn = lambda;
-    std::function<double(double)> std_fn = lambda;
-    double(*fnptr)(double) = &add10;
-    TimeIt(repeats, "nstd::function", [&]() { test(nstd_fn); });
+    TimeIt(repeats, "nstd::function", &test_nstd);
     VerifySum();
-    TimeIt(repeats, " std::function", [&]() { test(std_fn); });
+    TimeIt(repeats, " std::function", &test_std);
     VerifySum();
-    TimeIt(repeats, "function ptr  ", [&]() { test(fnptr); });
+    TimeIt(repeats, "function ptr  ", &test_fnptr);
     VerifySum();
 
-    double nstd_val = TimeIt(repeats, "nstd::function", [&]() { test(nstd_fn); });
+    double nstd_val = TimeIt(repeats, "nstd::function", &test_nstd);
     VerifySum();
-    double std_val  = TimeIt(repeats, " std::function", [&]() { test(std_fn); });
+    double std_val  = TimeIt(repeats, " std::function", &test_std);
     VerifySum();
-    double fnp_val  = TimeIt(repeats, "function ptr  ", [&]() { test(fnptr); });
+    double fnp_val  = TimeIt(repeats, "function ptr  ", &test_fnptr);
     VerifySum();
 
     std::cout << " std / fnp = " <<  std_val / fnp_val << std::endl;
