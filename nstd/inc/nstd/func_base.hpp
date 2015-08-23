@@ -4,6 +4,7 @@
 #include <utility>
 #include "noinit.hpp"
 #include "compiler_hints.hpp"
+#include "type_traits.hpp"
 
 #if _MSC_VER
 #pragma warning(push)
@@ -17,11 +18,11 @@ namespace nstd {
     class func_base
     {
     public:
-        typedef TRet(*fn_raw)(TArgs... args);
         typedef func_base<TRet, TArgs...> This;
+        typedef TRet(*fn_raw)(TArgs... args);
 
     private:
-        typedef TRet(NSTD_VECTORCALL*fn_type)(char* obj, TArgs&&... args);
+        typedef TRet(NSTD_VECTORCALL*fn_type)(char* obj, TArgs... args);
         fn_type m_fn;
         char* m_obj;
 
@@ -100,7 +101,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs&&... args)
+                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs... args)
                 {
                     fn_raw fn = (fn_raw)obj;
                     return fn(std::forward<TArgs>(args)...);
@@ -115,7 +116,7 @@ namespace nstd {
         {
             struct Adapter
             {
-                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs&&... args)
+                static TRet NSTD_VECTORCALL invoke(char* obj, TArgs... args)
                 {
                     FuncObj& fnobj = (FuncObj&)*obj;
                     return fnobj(std::forward<TArgs>(args)...);
@@ -131,9 +132,9 @@ namespace nstd {
             return !!m_fn;
         }
 
-        TRet operator()(TArgs... args) const
+        TRet operator()(typename value_to_cref<TArgs>::type... args) const
         {
-            return m_fn(m_obj, std::forward<TArgs>(args)...);
+            return m_fn(m_obj, std::forward<typename value_to_cref<TArgs>::type>(args)...);
         }
     };
 
