@@ -141,7 +141,8 @@ namespace nstd {
         template <class FuncObj>
         bool assign_fnobj(FuncObj&& fnobj)
         {
-            typedef fnobj_adapter<FuncObj> adapter_t;
+            typedef typename std::decay<FuncObj>::type DecayFuncObj;
+            typedef fnobj_adapter<DecayFuncObj> adapter_t;
             char* p_buf = m_p_byte_pool->acquire(sizeof(adapter_t));
             if (p_buf)
             {

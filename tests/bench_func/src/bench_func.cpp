@@ -5,56 +5,26 @@
 #include <stdlib.h>
 #include <vector>
 #include <functional>
+#include <time.h>
 #include "nstd/function.hpp"
-
-#if defined(_MSC_VER)
-#include <intrin.h>
-#endif
-
-#if defined(_MSC_VER)
-int64_t readtsc()
-{
-    return (int64_t)__rdtsc();
-}
-#elif defined(__GNUC__)
-int64_t readtsc()
-{
-#if defined(__i386__)
-    long long a;
-    asm volatile("rdtsc":"=A" (a));
-    return (int64_t)a;
-#elif defined(__x86_64)
-    unsigned int _hi, _lo;
-    asm volatile("rdtsc":"=a"(_lo), "=d"(_hi));
-    return ((int64_t)_hi << 32) | _lo;
-#else
-    // ARM etc.
-    return 0;
-#endif
-}
-#endif
 
 template <class Func>
 double TimeIt(int count, const char* pName, Func&& func)
 {
-    for (int ii = 0; ii < count; ++ii) {
-        func();
-    }
-
     double totDuration = 0;
 
     for (int ii = 0; ii < count; ++ii) {
-        auto startTime = readtsc();
+        clock_t c_start = clock();
 
         func();
 
-        auto endTime = readtsc();
+        clock_t c_end = clock();
 
-        totDuration += double(endTime - startTime);
+        totDuration += double(c_end - c_start);
     }
 
     double avgDuration = totDuration / count;
-    std::cout << pName << " took " << avgDuration << " cycles." << std::endl;
+    std::cout << pName << " took " << avgDuration / CLOCKS_PER_SEC << " seconds." << std::endl;
 
     return avgDuration;
 }
@@ -76,13 +46,14 @@ double g_sum = 0.0;
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
+const int NUM_VALUES = 100 * 1000 * 1000;
+
 static void test(double(*dd)(double))
 {
     if (g_false) {
         dd = &add20;
     }
     g_sum = 0;
-    int NUM_VALUES = 10 * 1000 * 1000;
     double sum = 0;
     for (int i = 0; i < NUM_VALUES; ++i) {
         sum += dd(i);
@@ -97,7 +68,6 @@ static void test(Function dd)
         dd = &add20;
     }
     g_sum = 0;
-    int NUM_VALUES = 10 * 1000 * 1000;
     double sum = 0;
     for (int i = 0; i < NUM_VALUES; ++i) {
         sum += dd(i);
@@ -111,13 +81,13 @@ static void test(Function dd)
 
 void VerifySum()
 {
-    int NUM_VALUES = 10 * 1000 * 1000;
     double sum = 0;
     for (int i = 0; i < NUM_VALUES; ++i) {
         sum += (i + 10);
     }
     if (sum != g_sum)
     {
+        fprintf(stderr, "FAILED: expected_sum=%f observed_sum=%f\n", sum, g_sum);
         exit(1);
     }
 }
@@ -128,22 +98,25 @@ int main(int argc, char** argv)
     if (argc > 3)
         g_false = true;
 
-    //double y = 0;
-    nstd::function<double(double)> nstd_fn = [=](double x) { return add10(x + 0); };
-    std::function<double(double)> std_fn = [=](double x) { return add10(x + 0); };
+    int repeats = 1;
+
+    double y = 0;
+    auto lambda = [=](double x) { (void)y; return add10(x); };
+    nstd::function<double(double)> nstd_fn = lambda;
+    std::function<double(double)> std_fn = lambda;
     double(*fnptr)(double) = &add10;
-    TimeIt(10, "nstd::function", [&]() { test(nstd_fn); });
+    TimeIt(repeats, "nstd::function", [&]() { test(nstd_fn); });
     VerifySum();
-    TimeIt(10, " std::function", [&]() { test(std_fn); });
+    TimeIt(repeats, " std::function", [&]() { test(std_fn); });
     VerifySum();
-    TimeIt(10, "function ptr  ", [&]() { test(fnptr); });
+    TimeIt(repeats, "function ptr  ", [&]() { test(fnptr); });
     VerifySum();
 
-    double nstd_val = TimeIt(10, "nstd::function", [&]() { test(nstd_fn); });
+    double nstd_val = TimeIt(repeats, "nstd::function", [&]() { test(nstd_fn); });
     VerifySum();
-    double std_val  = TimeIt(10, " std::function", [&]() { test(std_fn); });
+    double std_val  = TimeIt(repeats, " std::function", [&]() { test(std_fn); });
     VerifySum();
-    double fnp_val  = TimeIt(10, "function ptr  ", [&]() { test(fnptr); });
+    double fnp_val  = TimeIt(repeats, "function ptr  ", [&]() { test(fnptr); });
     VerifySum();
 
     std::cout << " std / fnp = " <<  std_val / fnp_val << std::endl;
