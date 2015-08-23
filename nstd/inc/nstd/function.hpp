@@ -117,7 +117,7 @@ namespace nstd {
                     m_p_byte_pool->release(p_buf);
                     return init_to_nullptr(false);
                 }
-                set_fn_obj((const Base&)rhs, m_p_fnobj->get_obj_ptr());
+                this->set_fn_obj((const Base&)rhs, m_p_fnobj->get_obj_ptr());
                 return true;
             }
             else
