@@ -10,7 +10,7 @@ class test_vector(repo.CppProject):
         self.includePaths.append(os.path.join(libnstd.projectDir, "inc"))
 
         sources = [
-            "src/test_vector.cpp",
+            "src/test_utility.cpp",
             "src/test_vector_main.cpp",
         ]
 
