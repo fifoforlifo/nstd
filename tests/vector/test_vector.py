@@ -11,10 +11,12 @@ class test_vector(repo.CppProject):
 
         sources = [
             "src/test_utility.cpp",
+            "src/test_vector.cpp",
             "src/test_vector_main.cpp",
         ]
 
+        pchTask = self.make_pch("src/test_vector_pch.h")
         with self.cpp_compile_ex(sources) as tasks:
-            pass
+            tasks.usePCH = pchTask.outputPath
 
         self.make_executable("test_vector")
