@@ -132,9 +132,9 @@ namespace nstd {
             return !!m_fn;
         }
 
-        inline TRet operator()(TArgs... args) const
+        inline TRet operator()(typename trivial_to_cref<TArgs>::type... args) const
         {
-            return m_fn(m_obj, static_cast<TArgs&&>(args)...);
+            return m_fn(m_obj, static_cast<typename trivial_to_cref<TArgs>::type&&>(args)...);
         }
     };
 

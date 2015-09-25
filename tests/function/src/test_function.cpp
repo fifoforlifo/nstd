@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <string>
 #include "gtest/gtest.h"
 #include <functional>
 #include <nstd/function.hpp>
@@ -95,6 +96,19 @@ TEST(Function, std_function)
         EXPECT_EQ(37.0, seven);
     }
     {
+        std::function<size_t(std::string)> getlen =
+            [](std::string s)
+        {
+            return s.size();
+        };
+        if (!getlen)
+        {
+            getlen = [](std::string) { return 0; };
+        }
+        size_t len = getlen("foo");
+        EXPECT_EQ(3u, len);
+    }
+    {
         Heavy heavy;
         heavy.values = std::vector<double>{ 1, 2, 3, 4, 5 };
         heavy.values2 = std::vector<double>{ 1, 2, 3, 4, 5 };
@@ -137,6 +151,19 @@ TEST(Function, nstd_function)
         }
         double seven = add2(3, 4);
         EXPECT_EQ(37.0, seven);
+    }
+    {
+        nstd::function<size_t(std::string)> getlen =
+            [](std::string s)
+            {
+                return s.size();
+            };
+        if (!getlen)
+        {
+            getlen = [](std::string) { return 0; };
+        }
+        size_t len = getlen("foo");
+        EXPECT_EQ(3u, len);
     }
     {
         Heavy heavy;
