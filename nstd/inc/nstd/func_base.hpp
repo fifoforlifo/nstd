@@ -104,7 +104,7 @@ namespace nstd {
                 static TRet NSTD_VECTORCALL invoke(char* obj, TArgs... args)
                 {
                     fn_raw fn = (fn_raw)obj;
-                    return fn(std::forward<TArgs>(args)...);
+                    return fn(static_cast<TArgs&&>(args)...);
                 }
             };
             m_fn = &Adapter::invoke;
@@ -119,7 +119,7 @@ namespace nstd {
                 static TRet NSTD_VECTORCALL invoke(char* obj, TArgs... args)
                 {
                     FuncObj& fnobj = (FuncObj&)*obj;
-                    return fnobj(std::forward<TArgs>(args)...);
+                    return fnobj(static_cast<TArgs&&>(args)...);
                 }
             };
             m_fn = &Adapter::invoke;
@@ -132,9 +132,9 @@ namespace nstd {
             return !!m_fn;
         }
 
-        inline TRet operator()(typename value_to_cref<TArgs>::type... args) const
+        inline TRet operator()(TArgs... args) const
         {
-            return m_fn(m_obj, std::forward<typename value_to_cref<TArgs>::type>(args)...);
+            return m_fn(m_obj, static_cast<TArgs&&>(args)...);
         }
     };
 
