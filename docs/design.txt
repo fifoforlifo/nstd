@@ -2,6 +2,7 @@ nstd library
 
 == Goals
 
+*   Playpen to try ideas.
 *   Library of generic code.  Container types, meta-programming helpers, etc.
 *   Consistency in design and implementation.
 *   Minimized dependencies, in interfaces and across SW layers.
@@ -10,7 +11,7 @@ nstd library
     **  Type erasure techniques.
 *   Performance.
 *   Support embedded platforms, where exceptions and RTTI are missing.
-    **  Non-exceptional versions of *interfaces*.
+    **  Exception-free versions of *interfaces*.
 *   Document new design patterns and implementation patterns.
 *   Simple, debuggable implementations wherever possible.
 *   Reasonably fast compilation: limited header deps, separate compilation, etc.
@@ -41,7 +42,7 @@ nstd library
         *** auto func = nstd::make_function([=foo]() {return foo;});
     **  As copyable and movable as the underlying bound type.
         *** Exceptional mode: throws
-        *** Non-exceptional mode: rhs unchanged, and lhs set to "null" state.
+        *** Exception-free mode: rhs unchanged, and lhs set to "null" state.
     **  Does *not* support pointer-to-member.  Only function-pointer & object.
 
 
@@ -226,5 +227,103 @@ Factor the problem into:
 *   make_adapter: free function callable by ADL to convert an underlying into an interface
 *   Container: like a smart pointer on an interface, that calls make_adapter when needed
     and supports value copy operations in certain cases
+
+
+
+== Exception-Free Design
+
+Exception-free design is about creating types and interfaces that intrinsically cannot fail
+in ways that require exceptions.  This goes beyond exception-neutrality, into the
+territory of all-noexcept code.
+
+Design-level strategies:
+
+*   Prefer infallible interfaces.
+    **  boost::intrusive_set::insert() is infallible, since it doesn't need to allocate.
+        As opposed to std::set or std::vector insert, which may throw std::bad_alloc.
+    **  boost::intrusive_ptr<> is infallible, since the refcount doesn't need to be
+        separately allocated.  As opposed to std::shared_ptr.
+*   Define pre-conditions on functions, pushing error-checking responsibility to
+    the caller, who may more efficiently enforce the guarantee [by design, or in batch].
+    **  e.g. don't error-check each vector[index]; caller should bound index against size()
+*   "Builder pattern" -- for each long-lived "real" object type, define a short-lived
+    builder type that acts as the real object's constructor argument.
+    **  Most builder types are mutable, as each field must be assigned individually
+        with localized error-checking.
+    **  Move fields into the real object.  (builder is one-time-use)
+*   Immutable objects where possible.
+    **  "Builder pattern" isolates potential points of failure to before an object's construction.
+*   Separate memory-management from algorithms where possible.
+    Might sound counter to RAII, but these can be *local* transformations.
+    **  Pre-allocate memory for results, separate from running an algorithm to populate them.
+    **  For dynamically sized results, pre-allocate a pool containing the upper-bound.
+
+
+Code-level strategies:
+
+*   All functions are noexcept.
+*   Return error-codes (or error-objects) in place of exceptions.
+*   Always construct objects with new (std::nothrow), or placement-new.
+*   Ensure class-constructors can never fail.
+    **  Never allocate memory inside a constructor.
+    **  Never call a function that can throw in a constructor.
+    **  Option: Builder pattern.
+    **  Option: Give the class a safe default-constructor, followed by in-place mutation.
+        [suitable for container types that are mutable by nature]
+        [or just the old Init() function pattern]
+    **  Option: "monadic" objects that have a sticky "valid" state.
+        NOT recommended
+        http://gamedev.stackexchange.com/questions/46424/try-catch-or-ifs-for-error-handling-in-c
+        *** Allows ordinary C++ copies to work, with delayed evaluation of validity.
+        *** Must check validity in all uses "defensively", which is the ultimate maintenance
+            nightmare and death-by-a-thousand-cuts perf killer.
+        *** This is like every sub-allocating object being intrinsically "nullable".
+    **  Can hide the construction logic behind a free factory function.
+        i.e. private constructor, and private or anonymous-namespaced "builder" type
+*   Define a known state for all types that fail allocations.
+    **  Vector that failed a reallocate should retain previous state.
+*   For non-monadic style:
+    Ban copy-constructors/assignment, in favor of ADL-invoked
+        bool clone(char* dst, const T& src);    // copy-construct
+        bool clone(T& dst, const T& src);       // copy-assign, optional
+    **  Consider copy-construction of a vector<string> -- without exceptions, an ordinary
+        copy-construct/assign cannot propagate failures without the caller comparing
+        every element.
+    **  With clone(), the error is reported recursively.
+        *** It's the equivalent of the compiler-generated copy-constructor, just with a bool
+            result propagated out.
+        *** It could be generated by an offline tool (using clang AST).
+        *** Default implementation can be provided in library for trivially copyable data structures.
+    **  A failed clone() must still legitimately destruct.
+*   Avoid dynamic allocations unless absolutely necessary.
+
+
+=== Algorithmic Performance
+
+Exception-neutral code may still suffer algorithmic performance degradation to
+maintain invariance.  For example:
+
+*   vector.insert()
+    **  For the simple case of appending, each element must be appended one at a time,
+        incrementing the container size by 1 on each iteration.  Necessary in case
+        the copy-construction of T throws, to guarantee the container size is consistent.
+        The more optimal solution would update the size only once, for a noexcept T.
+    **  A more severe example is insertion-in-the-middle.  The optimal solution would
+        first slide elements over, then copy new values into the empty slots.  Sliding
+        elements requires starting from the end-element.  If the second element to be
+        moved calls a throwing copy-constructor then there may be a "hole" in the
+        raw array containing non-constructed element memory.
+        *** The Microsoft STL uses an append+rotate strategy = ~3N operations = 3x slower than optimal,
+            just to remain exception-safe.
+        *** An alternative might be to append default-constructed elements for each new element
+            before performing the slide.
+            The STL could do this, but requiring a default-constructor is at odds with our
+            container type usability goals.  Default-construction also would add overhead
+            as compared to not requiring it at all.
+*   Simple memory allocations always need an RAII wrapper that is moved-from on success,
+    implying an extra mandatory destructor with if-statement evaluation even in the success path.
+
+
+
 
 
