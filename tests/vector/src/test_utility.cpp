@@ -14,6 +14,8 @@ TEST(Utility, GenericAssign)
     // coA = coB; // illegal
     nstd::assign(coA, coB);
     EXPECT_EQ(&y, &coA.value);
+    nstd::assign(coA, std::move(coB));
+    EXPECT_EQ(&y, &coA.value);
 }
 
 TEST(Utility, Swap)

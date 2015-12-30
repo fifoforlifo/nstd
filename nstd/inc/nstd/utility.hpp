@@ -9,16 +9,19 @@ namespace nstd {
         template <class T>
         void assign(T& lhs, const T& rhs, typename std::enable_if<std::is_move_assignable<T>::value>::type* = nullptr)
         {
+            static_assert(!std::is_reference<T>::value, "");
             lhs = rhs;
         }
         template <class T>
         void assign(T& lhs, T&& rhs, typename std::enable_if<std::is_move_assignable<T>::value>::type* = nullptr)
         {
+            static_assert(!std::is_reference<T>::value, "");
             lhs = std::move(rhs);
         }
         template <class T>
         void assign(T& lhs, const T& rhs, typename std::enable_if<!std::is_move_assignable<T>::value>::type* = nullptr)
         {
+            static_assert(!std::is_reference<T>::value, "");
             if (&lhs != &rhs) {
                 lhs.~T();
                 new (&lhs) T(rhs);
@@ -27,6 +30,7 @@ namespace nstd {
         template <class T>
         void assign(T& lhs, T&& rhs, typename std::enable_if<!std::is_move_assignable<T>::value>::type* = nullptr)
         {
+            static_assert(!std::is_reference<T>::value, "");
             if (&lhs != &rhs) {
                 lhs.~T();
                 new (&lhs) T(std::move(rhs));
@@ -59,15 +63,9 @@ namespace nstd {
     }
 
     template <class T>
-    T& assign(T& lhs, const T& rhs)
+    typename std::remove_reference<T>::type& assign(typename std::remove_reference<T>::type& lhs, T&& rhs)
     {
-        detail::assign(lhs, rhs);
-        return lhs;
-    }
-    template <class T>
-    T& assign(T& lhs, T&& rhs, typename std::enable_if<std::is_move_assignable<T>::value>::type* = nullptr)
-    {
-        detail::assign(lhs, rhs);
+        detail::assign<typename std::remove_reference<T>::type>(lhs, std::forward<T>(rhs));
         return lhs;
     }
 
