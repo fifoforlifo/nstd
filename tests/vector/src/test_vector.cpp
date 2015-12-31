@@ -4,6 +4,10 @@
 #include <nstd/utility.hpp>
 #include "test_vector_common.h"
 
+#ifndef _MSC_VER
+#define _MSC_VER 0
+#endif
+
 TEST(Vector, MoveSemantics)
 {
     typedef nstd::vector<int> VecInt;

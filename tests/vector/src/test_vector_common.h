@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nstd/utility.hpp>
+
 struct ConOnly
 {
     int& value;
@@ -8,6 +10,9 @@ struct ConOnly
         : value(value_)
     {}
     ConOnly(const ConOnly& rhs)
+        : value(rhs.value)
+    {}
+    ConOnly(ConOnly&& rhs) NSTD_NOEXCEPT_DECL(true)
         : value(rhs.value)
     {}
 };
