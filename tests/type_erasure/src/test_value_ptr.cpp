@@ -44,7 +44,7 @@ TEST(TypeErasure, value_ptr_nd)
     typedef nstd::value_ptr_nd<IFloatNum> IFloatNumValuePtr;
 
     {
-        INumValuePtr pNumA = Num{ 3 };
+        INumValuePtr pNumA = INumValuePtr().acquire(new Num{ 3 });
         EXPECT_EQ(3, pNumA->Value());
         INumValuePtr pNumB = pNumA;
         EXPECT_EQ(3, pNumB->Value());
@@ -64,9 +64,13 @@ TEST(TypeErasure, value_ptr_nd)
         IFloatNumValuePtr pNumF = pNumD.copy_as<IFloatNum>();
         EXPECT_EQ(3.0f, pNumF->ValueFloat());
         pNumF = pNumD.move_as<IFloatNum>();
+        EXPECT_TRUE(!pNumD);
         EXPECT_EQ(3.0f, pNumF->ValueFloat());
         pNumD = pNumF.copy_as<Num>();
         EXPECT_TRUE(!!pNumD);
+        Num num(8);
+        pNumA = num;
+        EXPECT_EQ(8, pNumA->Value());
     }
 }
 
@@ -78,7 +82,7 @@ TEST(TypeErasure, value_ptr_nd_sbo)
     typedef nstd::value_ptr_nd_sbo<IFloatNum, 0x30> IFloatNumValuePtr;
 
     {
-        INumValuePtr pNumA = Num{ 3 };
+        INumValuePtr pNumA = INumValuePtr().acquire(new Num{ 3 });
         EXPECT_EQ(3, pNumA->Value());
         INumValuePtr pNumB = pNumA;
         EXPECT_EQ(3, pNumB->Value());
@@ -97,8 +101,12 @@ TEST(TypeErasure, value_ptr_nd_sbo)
         IFloatNumValuePtr pNumF = pNumD.copy_as<IFloatNum>();
         EXPECT_EQ(3.0f, pNumF->ValueFloat());
         pNumF = pNumD.move_as<IFloatNum>();
+        EXPECT_TRUE(!pNumD);
         EXPECT_EQ(3.0f, pNumF->ValueFloat());
         pNumD = pNumF.copy_as<Num>();
         EXPECT_TRUE(!!pNumD);
+        Num num(8);
+        pNumA = num;
+        EXPECT_EQ(8, pNumA->Value());
     }
 }

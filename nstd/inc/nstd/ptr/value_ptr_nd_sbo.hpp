@@ -176,19 +176,19 @@ namespace nstd {
         bool assign_object_value(Object&& obj)
         {
             typedef typename std::decay<Object>::type Obj;
-            if (sizeof(Object) <= SboSize)
+            if (sizeof(Obj) <= SboSize)
             {
-                Object* p_object = new (m_sbo_buffer) Obj(std::forward<Object>(obj));
+                Obj* p_object = new (m_sbo_buffer) Obj(std::forward<Object>(obj));
                 m_p_interface = p_object;
                 m_p_object = (char*)p_object;
             }
             else
             {
-                Object* p_object = new Object(std::forward<Object>(obj));
+                Obj* p_object = new Obj(std::forward<Object>(obj));
                 m_p_interface = p_object;
                 m_p_object = (char*)p_object;
             }
-            m_p_cloner = &detail::cloner_nd<Object>::Instance;
+            m_p_cloner = &detail::cloner_nd<Obj>::Instance;
             return true;
         }
 
@@ -319,6 +319,16 @@ namespace nstd {
         {
             release();
             assign_object_value(std::forward<Object>(obj));
+            return *this;
+        }
+
+        template <class Object>
+        This& acquire(Object* p_object)
+        {
+            release();
+            m_p_interface = p_object;
+            m_p_object = (char*)p_object;
+            m_p_cloner = &detail::cloner_nd<Object>::Instance;
             return *this;
         }
 
