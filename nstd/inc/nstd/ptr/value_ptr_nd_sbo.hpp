@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../noinit.hpp"
+#include <assert.h>
 #include <utility>
 #include <new>
 
@@ -14,63 +15,59 @@ namespace nstd {
 
     namespace detail {
 
-        struct value_ptr_nd_sbo_scoped_buffer
+        struct cloner_nd_iface
         {
-            char* p;
-            ~value_ptr_nd_sbo_scoped_buffer() { delete[] p; }
-            value_ptr_nd_sbo_scoped_buffer(char* p_) : p(p_) {}
+            virtual char* copy(char* p_sbo_buf, size_t sbo_buf_size, const char* src) const = 0;
+            virtual char* move(char* p_sbo_buf, size_t sbo_buf_size, char* src) const = 0;
+            virtual void destruct(char* p_sbo_buf, size_t sbo_buf_size, char* p_obj) const = 0;
         };
 
         template <class Object>
-        struct value_ptr_nd_sbo_detail
+        struct cloner_nd : public cloner_nd_iface
         {
-            static char* copy(char* p_sbo_buf, size_t sbo_buf_size, const char* src)
+            static_assert(std::is_same<Object, typename std::decay<Object>::type>::value, "Object must be decayed type.");
+
+            virtual char* copy(char* p_sbo_buf, size_t sbo_buf_size, const char* src) const
             {
+                const Object& rhs = *(const Object*)src;
                 if (sizeof(Object) <= sbo_buf_size)
                 {
-                    Object* p_obj = new (p_sbo_buf) Object(*(const Object*)src);
-                    if (!p_obj)
-                    {
-                        return nullptr;
-                    }
-                    return p_sbo_buf;
+                    Object* p_obj = new (p_sbo_buf) Object(rhs);
+                    return (char*)p_obj;
                 }
                 else
                 {
-                    value_ptr_nd_sbo_scoped_buffer buf = new (std::nothrow) char[sizeof(Object)];
-                    if (!buf.p)
-                    {
-                        return nullptr;
-                    }
-                    new (buf.p) Object(*(const Object*)src);
-                    char* p_buf = buf.p;
-                    buf.p = nullptr;
-                    return p_buf;
+                    Object* p_obj = new Object(rhs);
+                    return (char*)p_obj;
                 }
             }
 
-            static char* move(char* p_sbo_buf, size_t sbo_buf_size, char* src)
+            virtual char* move(char* p_sbo_buf, size_t sbo_buf_size, char* src) const
             {
-                if (sizeof(Object) <= sbo_buf_size)
+                Object& rhs = *(Object*)src;
+                assert(sizeof(Object) <= sbo_buf_size);
+                Object* p_obj = new (p_sbo_buf) Object(std::move(rhs));
+                return (char*)p_obj;
+            }
+
+            virtual void destruct(char* p_sbo_buf, size_t sbo_buf_size, char* p_obj) const
+            {
+                Object* p_object = (Object*)p_obj;
+                if (uintptr_t(p_obj - p_sbo_buf) < sbo_buf_size)
                 {
-                    new (p_sbo_buf) Object(static_cast<Object&&>(*(Object*)src));
-                    return p_sbo_buf;
+                    p_object->~Object();
                 }
                 else
                 {
-                    value_ptr_nd_sbo_scoped_buffer buf = new (std::nothrow) char[sizeof(Object)];
-                    if (!buf.p)
-                    {
-                        return nullptr;
-                    }
-                    new (buf.p) Object(static_cast<Object&&>(*(Object*)src));
-                    char* p_buf = buf.p;
-                    buf.p = nullptr;
-                    return p_buf;
+                    delete p_object;
                 }
             }
+
+            static cloner_nd<Object> Instance;
         };
 
+        template <class Object>
+        cloner_nd<Object> cloner_nd<Object>::Instance;
     }
 
     template <class Interface, size_t SboSize>
@@ -78,14 +75,11 @@ namespace nstd {
     {
     private:
         typedef value_ptr_nd_sbo<Interface, SboSize> This;
-        typedef char* (*CopyFn)(char* p_sbo_buf, size_t sbo_buf_size, const char* src);
-        typedef char* (*MoveFn)(char* p_sbo_buf, size_t sbo_buf_size, char* src);
         template <class Other, size_t OtherSize> friend class value_ptr_nd_sbo;
 
         Interface* m_p_interface;
         char* m_p_object;
-        CopyFn m_copy;
-        MoveFn m_move;
+        detail::cloner_nd_iface* m_p_cloner;
         char m_sbo_buffer[SboSize];
 
     private:
@@ -93,8 +87,7 @@ namespace nstd {
         {
             m_p_interface = nullptr;
             m_p_object = nullptr;
-            m_copy = nullptr;
-            m_move = nullptr;
+            m_p_cloner = nullptr;
             return result;
         }
 
@@ -102,15 +95,7 @@ namespace nstd {
         {
             if (m_p_interface)
             {
-                m_p_interface->~Interface();
-                if (uintptr_t((char*)m_p_object - m_sbo_buffer) < SboSize)
-                {
-                }
-                else
-                {
-                    delete[] m_p_object;
-                }
-                null_init(true);
+                m_p_cloner->destruct(m_sbo_buffer, SboSize, m_p_object);
             }
         }
 
@@ -121,15 +106,9 @@ namespace nstd {
             {
                 return null_init(true);
             }
-            char* p_object = rhs.m_copy(m_sbo_buffer, SboSize, rhs.m_p_object);
-            if (!p_object)
-            {
-                return null_init(false);
-            }
-            m_p_interface = static_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
-            m_p_object = p_object;
-            m_copy = rhs.m_copy;
-            m_move = rhs.m_move;
+            m_p_object = rhs.m_p_cloner->copy(m_sbo_buffer, SboSize, rhs.m_p_object);
+            m_p_interface = static_cast<Interface*>((Rhs*)(m_p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+            m_p_cloner = rhs.m_p_cloner;
             return true;
         }
         template <class Rhs, size_t RhsSboSize>
@@ -140,15 +119,9 @@ namespace nstd {
             {
                 return null_init(true);
             }
-            char* p_object = rhs.m_copy(m_sbo_buffer, SboSize, rhs.m_p_object);
-            if (!p_object)
-            {
-                return null_init(false);
-            }
-            m_p_interface = (Interface*)(p_object + ((char*)p_interface - rhs.m_p_object));
-            m_p_object = p_object;
-            m_copy = rhs.m_copy;
-            m_move = rhs.m_move;
+            m_p_object = rhs.m_p_cloner->copy(m_sbo_buffer, SboSize, rhs.m_p_object);
+            m_p_interface = dynamic_cast<Interface*>((Rhs*)(m_p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+            m_p_cloner = rhs.m_p_cloner;
             return true;
         }
 
@@ -162,25 +135,17 @@ namespace nstd {
             }
             if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
             {
-                char* p_object = rhs.m_move(m_sbo_buffer, SboSize, rhs.m_p_object);
-                if (!p_object)
-                {
-                    return null_init(false);
-                }
-                m_p_interface = static_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
-                m_p_object = p_object;
+                m_p_object = rhs.m_p_cloner->move(m_sbo_buffer, SboSize, rhs.m_p_object);
+                m_p_interface = static_cast<Interface*>((Rhs*)(m_p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+                rhs.release();
             }
             else
             {
-                m_p_interface = p_interface;
+                m_p_interface = static_cast<Interface*>(rhs.m_p_interface);
                 m_p_object = rhs.m_p_object;
             }
-            m_copy = rhs.m_copy;
-            m_move = rhs.m_move;
-            rhs.m_p_interface = nullptr;
-            rhs.m_p_object = nullptr;
-            rhs.m_copy = nullptr;
-            rhs.m_move = nullptr;
+            m_p_cloner = rhs.m_p_cloner;
+            rhs.null_init(true);
             return true;
         }
         template <class Rhs, size_t RhsSboSize>
@@ -193,36 +158,17 @@ namespace nstd {
             }
             if (uintptr_t((char*)rhs.m_p_interface - rhs.m_sbo_buffer) < RhsSboSize)
             {
-                char* p_object = rhs.m_move(m_sbo_buffer, SboSize, rhs.m_p_object);
-                if (!p_object)
-                {
-                    return null_init(false);
-                }
-                m_p_interface = dynamic_cast<Interface*>((Rhs*)(p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
-                m_p_object = p_object;
+                m_p_object = rhs.m_p_cloner->move(m_sbo_buffer, SboSize, rhs.m_p_object);
+                m_p_interface = dynamic_cast<Interface*>((Rhs*)(m_p_object + ((char*)rhs.m_p_interface - rhs.m_p_object)));
+                rhs.release();
             }
             else
             {
                 m_p_interface = p_interface;
                 m_p_object = rhs.m_p_object;
             }
-            m_copy = rhs.m_copy;
-            m_move = rhs.m_move;
-            rhs.m_p_interface = nullptr;
-            rhs.m_p_object = nullptr;
-            rhs.m_copy = nullptr;
-            rhs.m_move = nullptr;
-            return true;
-        }
-
-        template <class Object>
-        bool assign_object_ptr(Object* p_obj)
-        {
-            typedef typename std::decay<Object>::type Obj;
-            m_p_interface = p_obj;
-            m_p_object = (char*)p_obj;
-            m_copy = &detail::value_ptr_nd_sbo_detail<Obj>::copy;
-            m_move = &detail::value_ptr_nd_sbo_detail<Obj>::move;
+            m_p_cloner = rhs.m_p_cloner;
+            rhs.null_init(true);
             return true;
         }
 
@@ -232,24 +178,17 @@ namespace nstd {
             typedef typename std::decay<Object>::type Obj;
             if (sizeof(Object) <= SboSize)
             {
-                Object* p_object = new (m_sbo_buffer) Obj(static_cast<Object&&>(obj));
+                Object* p_object = new (m_sbo_buffer) Obj(std::forward<Object>(obj));
                 m_p_interface = p_object;
                 m_p_object = (char*)p_object;
             }
             else
             {
-                detail::value_ptr_nd_sbo_scoped_buffer buf = new (std::nothrow) char[sizeof(Obj)];
-                if (!buf.p)
-                {
-                    return false;
-                }
-                Object* p_object = new (buf.p) Object(static_cast<Object&&>(obj));
+                Object* p_object = new Object(std::forward<Object>(obj));
                 m_p_interface = p_object;
                 m_p_object = (char*)p_object;
-                buf.p = nullptr;
             }
-            m_copy = &detail::value_ptr_nd_sbo_detail<Obj>::copy;
-            m_move = &detail::value_ptr_nd_sbo_detail<Obj>::move;
+            m_p_cloner = &detail::cloner_nd<Object>::Instance;
             return true;
         }
 
@@ -273,11 +212,11 @@ namespace nstd {
             }
         }
         value_ptr_nd_sbo()
-            : m_p_interface(), m_p_object(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_p_cloner()
         {
         }
         value_ptr_nd_sbo(std::nullptr_t)
-            : m_p_interface(), m_p_object(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_p_cloner()
         {
         }
         value_ptr_nd_sbo(const This& rhs)
@@ -317,16 +256,10 @@ namespace nstd {
             move_init_static(std::move(rhs));
         }
         template <class Object>
-        value_ptr_nd_sbo(Object* p_obj)
-            : m_p_interface(), m_p_object(), m_copy(), m_move()
-        {
-            assign_object_ptr(p_obj);
-        }
-        template <class Object, class U = typename std::enable_if<!std::is_pointer<typename std::remove_reference<Object>::type>::value>::type>
         value_ptr_nd_sbo(Object&& obj)
-            : m_p_interface(), m_p_object(), m_copy(), m_move()
+            : m_p_interface(), m_p_object(), m_p_cloner()
         {
-            assign_object_value(static_cast<Object&&>(obj));
+            assign_object_value(std::forward<Object>(obj));
         }
 
         This& operator=(const This& rhs)
@@ -350,7 +283,7 @@ namespace nstd {
         This& operator=(This&& rhs)
         {
             release();
-            move_init_static(static_cast<This&&>(rhs));
+            move_init_static(std::forward<This>(rhs));
             return *this;
         }
         template <class Rhs, size_t RhsSboSize>
@@ -381,18 +314,11 @@ namespace nstd {
             move_init_static(std::move(rhs));
             return *this;
         }
-        template <class Object, class U = typename std::enable_if<std::is_pointer<typename std::remove_reference<Object>::type>::value>::type>
-        This& operator=(Object* p_obj)
-        {
-            release();
-            assign_object_ptr(p_obj);
-            return *this;
-        }
-        template <class Object, class U = typename std::enable_if<!std::is_pointer<typename std::remove_reference<Object>::type>::value>::type>
+        template <class Object>
         This& operator=(Object&& obj)
         {
             release();
-            assign_object_value(static_cast<Object&&>(obj));
+            assign_object_value(std::forward<Object>(obj));
             return *this;
         }
 
@@ -415,7 +341,7 @@ namespace nstd {
         {
             value_ptr_nd_sbo<Other, OtherSboSize> other = noinit_t();
             other.copy_init_dynamic(*this);
-            return std::move(other);
+            return other;
         }
 
         template <class Other, size_t OtherSboSize = SboSize>
@@ -423,7 +349,7 @@ namespace nstd {
         {
             value_ptr_nd_sbo<Other, OtherSboSize> other = noinit_t();
             other.move_init_dynamic(std::move(*this));
-            return std::move(other);
+            return other;
         }
     };
 
