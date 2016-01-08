@@ -172,20 +172,29 @@ namespace nstd {
             return true;
         }
 
-        template <class Object>
-        bool assign_object_value(Object&& obj)
+        template <class Src, class Dst>
+        struct cast_implicitly
+        {
+            typename std::remove_reference<Dst>::type* operator()(typename std::remove_reference<Src>::type* p_src)
+            {
+                return p_src;
+            }
+        };
+
+        template <class Object, class CastToInterface>
+        bool assign_object_value(Object&& obj, CastToInterface&& cast_to_interface)
         {
             typedef typename std::decay<Object>::type Obj;
             if (sizeof(Obj) <= SboSize)
             {
                 Obj* p_object = new (m_sbo_buffer) Obj(std::forward<Object>(obj));
-                m_p_interface = p_object;
+                m_p_interface = cast_to_interface(p_object);
                 m_p_object = (char*)p_object;
             }
             else
             {
                 Obj* p_object = new Obj(std::forward<Object>(obj));
-                m_p_interface = p_object;
+                m_p_interface = cast_to_interface(p_object);
                 m_p_object = (char*)p_object;
             }
             m_p_cloner = &detail::cloner_nd<Obj>::Instance;
@@ -259,7 +268,7 @@ namespace nstd {
         value_ptr_nd_sbo(Object&& obj)
             : m_p_interface(), m_p_object(), m_p_cloner()
         {
-            assign_object_value(std::forward<Object>(obj));
+            assign_object_value(std::forward<Object>(obj), cast_implicitly<Object, Interface>());
         }
 
         This& operator=(const This& rhs)
@@ -318,15 +327,23 @@ namespace nstd {
         This& operator=(Object&& obj)
         {
             release();
-            assign_object_value(std::forward<Object>(obj));
+            assign_object_value(std::forward<Object>(obj), cast_implicitly<Object, Interface>());
             return *this;
         }
 
-        template <class Object>
-        This& acquire(Object* p_object)
+        template <class Object, class CastToInterface = cast_implicitly<Object, Interface>>
+        This& assign(Object&& obj, CastToInterface&& cast_to_interface= cast_implicitly<Object, Interface>())
         {
             release();
-            m_p_interface = p_object;
+            assign_object_value(std::forward<Object>(obj), std::forward<CastToInterface>(cast_to_interface));
+            return *this;
+        }
+
+        template <class Object, class CastToInterface = cast_implicitly<Object, Interface>>
+        This& acquire(Object* p_object, CastToInterface&& cast_to_interface = cast_implicitly<Object, Interface>())
+        {
+            release();
+            m_p_interface = cast_to_interface(p_object);
             m_p_object = (char*)p_object;
             m_p_cloner = &detail::cloner_nd<Object>::Instance;
             return *this;
