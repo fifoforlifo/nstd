@@ -9,12 +9,6 @@ struct ConOnly
     ConOnly(int& value_)
         : value(value_)
     {}
-    ConOnly(const ConOnly& rhs)
-        : value(rhs.value)
-    {}
-    ConOnly(ConOnly&& rhs) NSTD_NOEXCEPT_DECL(true)
-        : value(rhs.value)
-    {}
 };
 
 class Swappable
