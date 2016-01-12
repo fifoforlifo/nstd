@@ -12,14 +12,17 @@ TEST(Utility, GenericAssign)
     EXPECT_EQ(&x, &coA.value);
     EXPECT_EQ(&y, &coB.value);
     // coA = coB; // illegal
-    nstd::assign(coA, coB);
+#if defined(NSTD_HAS_NOEXCEPT)
+    nstd::auto_assign(coA, coB);
     EXPECT_EQ(&y, &coA.value);
-    nstd::assign(coA, std::move(coB));
+    nstd::auto_assign(coA, std::move(coB));
     EXPECT_EQ(&y, &coA.value);
+#endif // NSTD_HAS_NOEXCEPT
 }
 
 TEST(Utility, Swap)
 {
+#if defined(NSTD_HAS_NOEXCEPT)
     {
         int x = 3;
         ConOnly coA = x;
@@ -31,6 +34,7 @@ TEST(Utility, Swap)
         EXPECT_EQ(&y, &coA.value);
         EXPECT_EQ(&x, &coB.value);
     }
+#endif // NSTD_HAS_NOEXCEPT
     {
         Swappable swA(3);
         Swappable swB(4);
