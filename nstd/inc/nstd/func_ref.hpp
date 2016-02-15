@@ -11,36 +11,36 @@
 namespace nstd {
 
     template <class TSig>
-    class func_ref : public decltype(select_func_base((TSig*)nullptr))
+    class func_ref_nc : public decltype(select_func_base((TSig*)nullptr))
     {
     public:
         typedef decltype(select_func_base((TSig*)nullptr)) Base;
-        typedef func_ref<TSig> This;
+        typedef func_ref_nc<TSig> This;
 
     public:
-        func_ref()
+        func_ref_nc()
             : Base()
         {}
-        func_ref(std::nullptr_t)
+        func_ref_nc(std::nullptr_t)
             : Base()
         {}
-        func_ref(const This& rhs)
+        func_ref_nc(const This& rhs)
             : Base(rhs)
         {}
-        func_ref(const This&& rhs)
+        func_ref_nc(const This&& rhs)
             : Base(static_cast<const This&&>(rhs))
         {}
-        func_ref(This& rhs)
+        func_ref_nc(This& rhs)
             : Base(rhs)
         {}
-        func_ref(This&& rhs)
+        func_ref_nc(This&& rhs)
             : Base(static_cast<This&&>(rhs))
         {}
-        func_ref(typename This::fn_raw fn)
+        func_ref_nc(typename This::fn_raw fn)
             : Base(fn)
         {}
         template <class FuncObj>
-        func_ref(FuncObj&& fnobj)
+        func_ref_nc(FuncObj&& fnobj)
             : Base(static_cast<FuncObj&&>(fnobj))
         {}
 

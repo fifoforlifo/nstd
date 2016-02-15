@@ -97,7 +97,7 @@ void ProcessNonCopyable(NonCopyable& nc)
     sprintf(s, "%d", nc.x);
 }
 
-void CallPNC(nstd::func_ref<void(NonCopyable&)> fref)
+void CallPNC(nstd::func_ref_nc<void(NonCopyable&)> fref)
 {
     NonCopyable nc;
     fref(nc);
@@ -106,21 +106,21 @@ void CallPNC(nstd::func_ref<void(NonCopyable&)> fref)
 TEST(Function, func_ref_ctor)
 {
     {
-        nstd::func_ref<double(double)> dd;
+        nstd::func_ref_nc<double(double)> dd;
         EXPECT_FALSE(!!dd);
     }
     {
-        nstd::func_ref<double(double)> dd = &sin;
+        nstd::func_ref_nc<double(double)> dd = &sin;
         EXPECT_TRUE(!!dd);
         EXPECT_EQ(0.0, dd(0.0));
     }
     {
-        nstd::func_ref<double(double)> dd = [](double x) { return sin(x); };
+        nstd::func_ref_nc<double(double)> dd = [](double x) { return sin(x); };
         EXPECT_TRUE(!!dd);
         EXPECT_EQ(0.0, dd(0.0));
     }
     {
-        nstd::func_ref<double(double)> dd = &add10;
+        nstd::func_ref_nc<double(double)> dd = &add10;
         double thirteen = dd(3.0);
         EXPECT_EQ(13.0, thirteen);
     }
