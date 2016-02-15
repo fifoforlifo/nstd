@@ -93,6 +93,8 @@ TEST(TypeErasure, value_ptr_nd_sbo)
         NumValuePtr pNumD = pNumC.move_as<Num>();
         EXPECT_TRUE(!pNumC);
         EXPECT_TRUE(!!pNumD);
+        pNumD = pNumA;
+        EXPECT_TRUE(pNumD->Value() == pNumA->Value());
         BigNumValuePtr pNumE = pNumD;
         EXPECT_TRUE(!!pNumD && !!pNumE);
         pNumE = std::move(pNumD);

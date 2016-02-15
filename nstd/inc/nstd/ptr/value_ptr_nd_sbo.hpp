@@ -208,17 +208,7 @@ namespace nstd {
     public:
         ~value_ptr_nd_sbo()
         {
-            if (m_p_interface)
-            {
-                m_p_interface->~Interface();
-                if (uintptr_t((char*)m_p_interface - m_sbo_buffer) < SboSize)
-                {
-                }
-                else
-                {
-                    delete[] m_p_object;
-                }
-            }
+            release();
         }
         value_ptr_nd_sbo()
             : m_p_interface(), m_p_object(), m_p_cloner()
